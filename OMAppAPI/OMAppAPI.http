@@ -1,6 +1,0 @@
-@OMAppAPI_HostAddress = http://localhost:5271
-
-GET {{OMAppAPI_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
