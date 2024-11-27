@@ -12,6 +12,9 @@ public partial class User
     [Column("id")]
     public int Id { get; set; }
 
+    [Column("identityUserId")]
+    public string IdentityUserId { get; set; }
+
     [Column("name")]
     [StringLength(255)]
     public string Name { get; set; } = null!;
@@ -24,7 +27,10 @@ public partial class User
     public int? PositionId { get; set; }
 
     [Column("customerId")]
-    public int? CustomerId { get; set; }
+    public int CustomerId { get; set; }
+
+    [Column("countryId")]
+    public int? CountryId { get; set; }
 
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
@@ -38,9 +44,13 @@ public partial class User
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
 
+    [ForeignKey("CountryId")]
+    [InverseProperty("Users")]
+    public virtual Country? Country { get; set; }
+
     [ForeignKey("CustomerId")]
     [InverseProperty("Users")]
-    public virtual Customer? Customer { get; set; }
+    public virtual Customer Customer { get; set; } = null!;
 
     [InverseProperty("User")]
     public virtual ICollection<GroupMessage> GroupMessages { get; set; } = new List<GroupMessage>();

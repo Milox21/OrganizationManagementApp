@@ -42,6 +42,9 @@ public partial class InvoiceCost
     [Column("customerId")]
     public int CustomerId { get; set; }
 
+    [Column("currencyId")]
+    public int? CurrencyId { get; set; }
+
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 
@@ -53,6 +56,10 @@ public partial class InvoiceCost
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
+
+    [ForeignKey("CurrencyId")]
+    [InverseProperty("InvoiceCosts")]
+    public virtual Currency? Currency { get; set; }
 
     [ForeignKey("CustomerId")]
     [InverseProperty("InvoiceCosts")]

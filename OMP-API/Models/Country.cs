@@ -31,4 +31,7 @@ public partial class Country
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
+
+    [InverseProperty("Country")]
+    public virtual ICollection<User> Users { get; set; } = new List<User>();
 }

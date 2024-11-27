@@ -30,6 +30,9 @@ public partial class DebitNote
     [Column("customerId")]
     public int CustomerId { get; set; }
 
+    [Column("currencyId")]
+    public int? CurrencyId { get; set; }
+
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 
@@ -41,6 +44,10 @@ public partial class DebitNote
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
+
+    [ForeignKey("CurrencyId")]
+    [InverseProperty("DebitNotes")]
+    public virtual Currency? CurrencyNavigation { get; set; }
 
     [ForeignKey("CustomerId")]
     [InverseProperty("DebitNotes")]

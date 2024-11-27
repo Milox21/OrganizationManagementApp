@@ -37,6 +37,9 @@ public partial class Payroll
     [Column("customerId")]
     public int CustomerId { get; set; }
 
+    [Column("currencyId")]
+    public int? CurrencyId { get; set; }
+
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 
@@ -52,6 +55,10 @@ public partial class Payroll
     [ForeignKey("ContractType")]
     [InverseProperty("Payrolls")]
     public virtual ContractType ContractTypeNavigation { get; set; } = null!;
+
+    [ForeignKey("CurrencyId")]
+    [InverseProperty("Payrolls")]
+    public virtual Currency? Currency { get; set; }
 
     [ForeignKey("CustomerId")]
     [InverseProperty("Payrolls")]

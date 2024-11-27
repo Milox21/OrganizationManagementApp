@@ -26,9 +26,6 @@ public partial class ReccuringIncomeInvoice
     [Column("nextDueDate", TypeName = "datetime")]
     public DateTime NextDueDate { get; set; }
 
-    [Column("customerId")]
-    public int CustomerId { get; set; }
-
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 
@@ -40,10 +37,6 @@ public partial class ReccuringIncomeInvoice
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
-
-    [ForeignKey("CustomerId")]
-    [InverseProperty("ReccuringIncomeInvoices")]
-    public virtual Customer Customer { get; set; } = null!;
 
     [ForeignKey("InvoiceId")]
     [InverseProperty("ReccuringIncomeInvoices")]

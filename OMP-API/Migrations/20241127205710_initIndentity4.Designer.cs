@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OMP_API.Models.Contexts;
 
@@ -11,9 +12,11 @@ using OMP_API.Models.Contexts;
 namespace OMP_API.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20241127205710_initIndentity4")]
+    partial class initIndentity4
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -220,6 +223,51 @@ namespace OMP_API.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("OMP_API.Models.Admin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreationDate")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime")
+                        .HasColumnName("creationDate")
+                        .HasDefaultValueSql("(getdate())");
+
+                    b.Property<DateTime?>("DeleteDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("deleteDate");
+
+                    b.Property<DateTime?>("EditDate")
+                        .HasColumnType("datetime")
+                        .HasColumnName("editDate");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit")
+                        .HasColumnName("isDeleted");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("password");
+
+                    b.HasKey("Id")
+                        .HasName("PK__Admins__3213E83FFADA5D77");
+
+                    b.ToTable("Admins");
+                });
+
             modelBuilder.Entity("OMP_API.Models.ContractType", b =>
                 {
                     b.Property<int>("Id")
@@ -274,7 +322,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Id")
-                        .HasName("PK__Contract__3213E83F3C20CDCF");
+                        .HasName("PK__Contract__3213E83F5815878A");
 
                     b.HasIndex("CustomerId");
 
@@ -320,7 +368,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id")
-                        .HasName("PK__Country__3213E83FAFE6F665");
+                        .HasName("PK__Country__3213E83F881D31EE");
 
                     b.ToTable("Country");
                 });
@@ -363,7 +411,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("isDeleted");
 
                     b.HasKey("Id")
-                        .HasName("PK__Currenci__3213E83FD1F38041");
+                        .HasName("PK__Currenci__3213E83F918EF608");
 
                     b.ToTable("Currencies");
                 });
@@ -408,7 +456,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("password");
 
                     b.HasKey("Id")
-                        .HasName("PK__Customer__3213E83F35E24FBE");
+                        .HasName("PK__Customer__3213E83FBA8D94FA");
 
                     b.ToTable("Customers");
                 });
@@ -433,10 +481,6 @@ namespace OMP_API.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("currency");
-
-                    b.Property<int?>("CurrencyId")
-                        .HasColumnType("int")
-                        .HasColumnName("currencyId");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int")
@@ -470,9 +514,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("value");
 
                     b.HasKey("Id")
-                        .HasName("PK__DebitNot__3213E83FA5ACCDF3");
-
-                    b.HasIndex("CurrencyId");
+                        .HasName("PK__DebitNot__3213E83F09677558");
 
                     b.HasIndex("CustomerId");
 
@@ -522,7 +564,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("topic");
 
                     b.HasKey("Id")
-                        .HasName("PK__Errors__3213E83F89403E77");
+                        .HasName("PK__Errors__3213E83F74876A49");
 
                     b.HasIndex("CustomerId");
 
@@ -572,7 +614,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("PK__Groups__3213E83F53CA99A1");
+                        .HasName("PK__Groups__3213E83FD3834658");
 
                     b.HasIndex("CustomerId");
 
@@ -620,7 +662,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__GroupMes__3213E83FDCCEBE82");
+                        .HasName("PK__GroupMes__3213E83FF4260B8C");
 
                     b.HasIndex("GroupId");
 
@@ -669,7 +711,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__GroupsUs__3213E83FF1D1464B");
+                        .HasName("PK__GroupsUs__3213E83F1A74F4EA");
 
                     b.HasIndex("GroupId");
 
@@ -718,7 +760,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id")
-                        .HasName("PK__ImageInp__3213E83F78F8C9D2");
+                        .HasName("PK__ImageInp__3213E83F11FB439D");
 
                     b.ToTable("ImageInput");
                 });
@@ -737,10 +779,6 @@ namespace OMP_API.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int?>("CurrencyId")
-                        .HasColumnType("int")
-                        .HasColumnName("currencyId");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int")
@@ -795,9 +833,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("vatTaxValue");
 
                     b.HasKey("Id")
-                        .HasName("PK__InvoiceC__3213E83F310AB2C4");
-
-                    b.HasIndex("CurrencyId");
+                        .HasName("PK__InvoiceC__3213E83F4730B068");
 
                     b.HasIndex("CustomerId");
 
@@ -821,10 +857,6 @@ namespace OMP_API.Migrations
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int?>("CurrencyId")
-                        .HasColumnType("int")
-                        .HasColumnName("currencyId");
-
                     b.Property<int>("CustomerId")
                         .HasColumnType("int")
                         .HasColumnName("customerId");
@@ -878,9 +910,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("vatTaxValue");
 
                     b.HasKey("Id")
-                        .HasName("PK__InvoiceI__3213E83FDCD6D769");
-
-                    b.HasIndex("CurrencyId");
+                        .HasName("PK__InvoiceI__3213E83F6F4DA711");
 
                     b.HasIndex("CustomerId");
 
@@ -943,7 +973,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Id")
-                        .HasName("PK__InvoiceT__3213E83F287EAB76");
+                        .HasName("PK__InvoiceT__3213E83FF2C8D260");
 
                     b.HasIndex("CustomerId");
 
@@ -997,7 +1027,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__Notifica__3213E83F27B0DAA5");
+                        .HasName("PK__Notifica__3213E83F1C8EAB56");
 
                     b.HasIndex("UserId");
 
@@ -1042,7 +1072,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__Notifica__3213E83F329ED79A");
+                        .HasName("PK__Notifica__3213E83F5BD0CE61");
 
                     b.HasIndex("UserId");
 
@@ -1067,10 +1097,6 @@ namespace OMP_API.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
-
-                    b.Property<int?>("CurrencyId")
-                        .HasColumnType("int")
-                        .HasColumnName("currencyId");
 
                     b.Property<int>("CustomerId")
                         .HasColumnType("int")
@@ -1114,11 +1140,9 @@ namespace OMP_API.Migrations
                         .HasColumnName("surname");
 
                     b.HasKey("Id")
-                        .HasName("PK__Payroll__3213E83FCDBD170F");
+                        .HasName("PK__Payroll__3213E83F7EDFC64D");
 
                     b.HasIndex("ContractType");
-
-                    b.HasIndex("CurrencyId");
 
                     b.HasIndex("CustomerId");
 
@@ -1178,7 +1202,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("PK__PayrollT__3213E83FDB6ED523");
+                        .HasName("PK__PayrollT__3213E83F578F27D2");
 
                     b.HasIndex("CustomerId");
 
@@ -1228,7 +1252,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("name");
 
                     b.HasKey("Id")
-                        .HasName("PK__Position__3213E83F16476757");
+                        .HasName("PK__Position__3213E83FFD67D6A3");
 
                     b.HasIndex("CustomerId");
 
@@ -1276,7 +1300,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userSenderId");
 
                     b.HasKey("Id")
-                        .HasName("PK__PrivateM__3213E83F3BE648B5");
+                        .HasName("PK__PrivateM__3213E83F60C30931");
 
                     b.HasIndex("UserRecipientId");
 
@@ -1300,6 +1324,10 @@ namespace OMP_API.Migrations
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int")
+                        .HasColumnName("customerId");
+
                     b.Property<DateTime?>("DeleteDate")
                         .HasColumnType("datetime")
                         .HasColumnName("deleteDate");
@@ -1332,7 +1360,9 @@ namespace OMP_API.Migrations
                         .HasColumnName("nextDueDate");
 
                     b.HasKey("Id")
-                        .HasName("PK__Reccurin__3213E83FF40254C6");
+                        .HasName("PK__Reccurin__3213E83F4D6AC24D");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("InvoiceId");
 
@@ -1354,6 +1384,10 @@ namespace OMP_API.Migrations
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
 
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("int")
+                        .HasColumnName("customerId");
+
                     b.Property<DateTime?>("DeleteDate")
                         .HasColumnType("datetime")
                         .HasColumnName("deleteDate");
@@ -1386,7 +1420,9 @@ namespace OMP_API.Migrations
                         .HasColumnName("nextDueDate");
 
                     b.HasKey("Id")
-                        .HasName("PK__Reccurin__3213E83F89099AD5");
+                        .HasName("PK__Reccurin__3213E83FA29DD903");
+
+                    b.HasIndex("CustomerId");
 
                     b.HasIndex("InvoiceId");
 
@@ -1436,7 +1472,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("PK__SpecialG__3213E83F54E2EB48");
+                        .HasName("PK__SpecialG__3213E83FF1856CEF");
 
                     b.HasIndex("CustomerId");
 
@@ -1490,7 +1526,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__SpecialG__3213E83F6FF0DB49");
+                        .HasName("PK__SpecialG__3213E83F03BD1DB8");
 
                     b.HasIndex("SpecialGroupId");
 
@@ -1543,7 +1579,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("userId");
 
                     b.HasKey("Id")
-                        .HasName("PK__SpecialG__3213E83F7696AC27");
+                        .HasName("PK__SpecialG__3213E83F9A09927F");
 
                     b.HasIndex("CustomerId");
 
@@ -1615,7 +1651,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("title");
 
                     b.HasKey("Id")
-                        .HasName("PK__Tasks__3213E83F964422DE");
+                        .HasName("PK__Tasks__3213E83F81C74467");
 
                     b.HasIndex("TaskRecipient");
 
@@ -1663,7 +1699,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("text");
 
                     b.HasKey("Id")
-                        .HasName("PK__TextInpu__3213E83F13DC09AD");
+                        .HasName("PK__TextInpu__3213E83F91C0D28B");
 
                     b.ToTable("TextInput");
                 });
@@ -1677,17 +1713,13 @@ namespace OMP_API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("CountryId")
-                        .HasColumnType("int")
-                        .HasColumnName("countryId");
-
                     b.Property<DateTime>("CreationDate")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("datetime")
                         .HasColumnName("creationDate")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<int>("CustomerId")
+                    b.Property<int?>("CustomerId")
                         .HasColumnType("int")
                         .HasColumnName("customerId");
 
@@ -1725,9 +1757,7 @@ namespace OMP_API.Migrations
                         .HasColumnName("surname");
 
                     b.HasKey("Id")
-                        .HasName("PK__Users__3213E83F4499240F");
-
-                    b.HasIndex("CountryId");
+                        .HasName("PK__Users__3213E83FD3C01ED7");
 
                     b.HasIndex("CustomerId");
 
@@ -1796,25 +1826,18 @@ namespace OMP_API.Migrations
                         .WithMany("ContractTypes")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__ContractT__custo__0E240DFC");
+                        .HasConstraintName("FK__ContractT__custo__4A4E069C");
 
                     b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("OMP_API.Models.DebitNote", b =>
                 {
-                    b.HasOne("OMP_API.Models.Currency", "CurrencyNavigation")
-                        .WithMany("DebitNotes")
-                        .HasForeignKey("CurrencyId")
-                        .HasConstraintName("FK__DebitNote__curre__2AC04CAA");
-
                     b.HasOne("OMP_API.Models.Customer", "Customer")
                         .WithMany("DebitNotes")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__DebitNote__custo__2BB470E3");
-
-                    b.Navigation("CurrencyNavigation");
+                        .HasConstraintName("FK__DebitNote__custo__603D47BB");
 
                     b.Navigation("Customer");
                 });
@@ -1825,7 +1848,7 @@ namespace OMP_API.Migrations
                         .WithMany("Errors")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__Errors__customer__31A25463");
+                        .HasConstraintName("FK__Errors__customer__6EC0713C");
 
                     b.Navigation("Customer");
                 });
@@ -1836,7 +1859,7 @@ namespace OMP_API.Migrations
                         .WithMany("Groups")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__Groups__customer__4D4A6ED8");
+                        .HasConstraintName("FK__Groups__customer__05A3D694");
 
                     b.Navigation("Customer");
                 });
@@ -1847,13 +1870,13 @@ namespace OMP_API.Migrations
                         .WithMany("GroupMessages")
                         .HasForeignKey("GroupId")
                         .IsRequired()
-                        .HasConstraintName("FK__GroupMess__group__68F2894D");
+                        .HasConstraintName("FK__GroupMess__group__214BF109");
 
                     b.HasOne("OMP_API.Models.User", "User")
                         .WithMany("GroupMessages")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__GroupMess__userI__67FE6514");
+                        .HasConstraintName("FK__GroupMess__userI__2057CCD0");
 
                     b.Navigation("Group");
 
@@ -1866,13 +1889,13 @@ namespace OMP_API.Migrations
                         .WithMany("GroupsUsers")
                         .HasForeignKey("GroupId")
                         .IsRequired()
-                        .HasConstraintName("FK__GroupsUse__group__6339AFF7");
+                        .HasConstraintName("FK__GroupsUse__group__1B9317B3");
 
                     b.HasOne("OMP_API.Models.User", "User")
                         .WithMany("GroupsUsers")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__GroupsUse__userI__62458BBE");
+                        .HasConstraintName("FK__GroupsUse__userI__1A9EF37A");
 
                     b.Navigation("Group");
 
@@ -1881,23 +1904,16 @@ namespace OMP_API.Migrations
 
             modelBuilder.Entity("OMP_API.Models.InvoiceCost", b =>
                 {
-                    b.HasOne("OMP_API.Models.Currency", "Currency")
-                        .WithMany("InvoiceCosts")
-                        .HasForeignKey("CurrencyId")
-                        .HasConstraintName("FK__InvoiceCo__curre__17AD7836");
-
                     b.HasOne("OMP_API.Models.Customer", "Customer")
                         .WithMany("InvoiceCosts")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__InvoiceCo__custo__16B953FD");
+                        .HasConstraintName("FK__InvoiceCo__custo__4F12BBB9");
 
                     b.HasOne("OMP_API.Models.InvoiceTaxRate", "VatTaxNavigation")
                         .WithMany("InvoiceCosts")
                         .HasForeignKey("VatTax")
-                        .HasConstraintName("FK__InvoiceCo__vatTa__18A19C6F");
-
-                    b.Navigation("Currency");
+                        .HasConstraintName("FK__InvoiceCo__vatTa__5006DFF2");
 
                     b.Navigation("Customer");
 
@@ -1906,23 +1922,16 @@ namespace OMP_API.Migrations
 
             modelBuilder.Entity("OMP_API.Models.InvoiceIncome", b =>
                 {
-                    b.HasOne("OMP_API.Models.Currency", "Currency")
-                        .WithMany("InvoiceIncomes")
-                        .HasForeignKey("CurrencyId")
-                        .HasConstraintName("FK__InvoiceIn__curre__1E5A75C5");
-
                     b.HasOne("OMP_API.Models.Customer", "Customer")
                         .WithMany("InvoiceIncomes")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__InvoiceIn__custo__1D66518C");
+                        .HasConstraintName("FK__InvoiceIn__custo__54CB950F");
 
                     b.HasOne("OMP_API.Models.InvoiceTaxRate", "VatTaxNavigation")
                         .WithMany("InvoiceIncomes")
                         .HasForeignKey("VatTax")
-                        .HasConstraintName("FK__InvoiceIn__vatTa__1F4E99FE");
-
-                    b.Navigation("Currency");
+                        .HasConstraintName("FK__InvoiceIn__vatTa__55BFB948");
 
                     b.Navigation("Customer");
 
@@ -1935,7 +1944,7 @@ namespace OMP_API.Migrations
                         .WithMany("InvoiceTaxRates")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__InvoiceTa__custo__049AA3C2");
+                        .HasConstraintName("FK__InvoiceTa__custo__40C49C62");
 
                     b.Navigation("Customer");
                 });
@@ -1946,7 +1955,7 @@ namespace OMP_API.Migrations
                         .WithMany("Notifications")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__Notificat__userI__58BC2184");
+                        .HasConstraintName("FK__Notificat__userI__11158940");
 
                     b.Navigation("User");
                 });
@@ -1957,7 +1966,7 @@ namespace OMP_API.Migrations
                         .WithMany("NotificationsSubscribers")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__Notificat__userI__5D80D6A1");
+                        .HasConstraintName("FK__Notificat__userI__15DA3E5D");
 
                     b.Navigation("User");
                 });
@@ -1968,22 +1977,15 @@ namespace OMP_API.Migrations
                         .WithMany("Payrolls")
                         .HasForeignKey("ContractType")
                         .IsRequired()
-                        .HasConstraintName("FK__Payroll__contrac__25FB978D");
-
-                    b.HasOne("OMP_API.Models.Currency", "Currency")
-                        .WithMany("Payrolls")
-                        .HasForeignKey("CurrencyId")
-                        .HasConstraintName("FK__Payroll__currenc__25077354");
+                        .HasConstraintName("FK__Payroll__contrac__5B78929E");
 
                     b.HasOne("OMP_API.Models.Customer", "Customer")
                         .WithMany("Payrolls")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__Payroll__custome__24134F1B");
+                        .HasConstraintName("FK__Payroll__custome__5A846E65");
 
                     b.Navigation("ContractTypeNavigation");
-
-                    b.Navigation("Currency");
 
                     b.Navigation("Customer");
                 });
@@ -1994,7 +1996,7 @@ namespace OMP_API.Migrations
                         .WithMany("PayrollTaxRates")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__PayrollTa__custo__095F58DF");
+                        .HasConstraintName("FK__PayrollTa__custo__4589517F");
 
                     b.Navigation("Customer");
                 });
@@ -2005,7 +2007,7 @@ namespace OMP_API.Migrations
                         .WithMany("Positions")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__Positions__custo__3E082B48");
+                        .HasConstraintName("FK__Positions__custo__7B264821");
 
                     b.Navigation("Customer");
                 });
@@ -2016,13 +2018,13 @@ namespace OMP_API.Migrations
                         .WithMany("PrivateMessageUserRecipients")
                         .HasForeignKey("UserRecipientId")
                         .IsRequired()
-                        .HasConstraintName("FK__PrivateMe__userR__6EAB62A3");
+                        .HasConstraintName("FK__PrivateMe__userR__2704CA5F");
 
                     b.HasOne("OMP_API.Models.User", "UserSender")
                         .WithMany("PrivateMessageUserSenders")
                         .HasForeignKey("UserSenderId")
                         .IsRequired()
-                        .HasConstraintName("FK__PrivateMe__userS__6DB73E6A");
+                        .HasConstraintName("FK__PrivateMe__userS__2610A626");
 
                     b.Navigation("UserRecipient");
 
@@ -2031,22 +2033,38 @@ namespace OMP_API.Migrations
 
             modelBuilder.Entity("OMP_API.Models.ReccuringCostInvoice", b =>
                 {
+                    b.HasOne("OMP_API.Models.Customer", "Customer")
+                        .WithMany("ReccuringCostInvoices")
+                        .HasForeignKey("CustomerId")
+                        .IsRequired()
+                        .HasConstraintName("FK__Reccuring__custo__6501FCD8");
+
                     b.HasOne("OMP_API.Models.InvoiceCost", "Invoice")
                         .WithMany("ReccuringCostInvoices")
                         .HasForeignKey("InvoiceId")
                         .IsRequired()
-                        .HasConstraintName("FK__Reccuring__invoi__30792600");
+                        .HasConstraintName("FK__Reccuring__invoi__65F62111");
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("OMP_API.Models.ReccuringIncomeInvoice", b =>
                 {
+                    b.HasOne("OMP_API.Models.Customer", "Customer")
+                        .WithMany("ReccuringIncomeInvoices")
+                        .HasForeignKey("CustomerId")
+                        .IsRequired()
+                        .HasConstraintName("FK__Reccuring__custo__6ABAD62E");
+
                     b.HasOne("OMP_API.Models.InvoiceIncome", "Invoice")
                         .WithMany("ReccuringIncomeInvoices")
                         .HasForeignKey("InvoiceId")
                         .IsRequired()
-                        .HasConstraintName("FK__Reccuring__invoi__353DDB1D");
+                        .HasConstraintName("FK__Reccuring__invoi__6BAEFA67");
+
+                    b.Navigation("Customer");
 
                     b.Navigation("Invoice");
                 });
@@ -2057,7 +2075,7 @@ namespace OMP_API.Migrations
                         .WithMany("SpecialGroups")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__custo__737017C0");
+                        .HasConstraintName("FK__SpecialGr__custo__2BC97F7C");
 
                     b.Navigation("Customer");
                 });
@@ -2068,13 +2086,13 @@ namespace OMP_API.Migrations
                         .WithMany("SpecialGroupsTickets")
                         .HasForeignKey("SpecialGroupId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__speci__7FD5EEA5");
+                        .HasConstraintName("FK__SpecialGr__speci__382F5661");
 
                     b.HasOne("OMP_API.Models.User", "User")
                         .WithMany("SpecialGroupsTickets")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__userI__7EE1CA6C");
+                        .HasConstraintName("FK__SpecialGr__userI__373B3228");
 
                     b.Navigation("SpecialGroup");
 
@@ -2087,19 +2105,19 @@ namespace OMP_API.Migrations
                         .WithMany("SpecialGroupsUsers")
                         .HasForeignKey("CustomerId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__custo__7834CCDD");
+                        .HasConstraintName("FK__SpecialGr__custo__308E3499");
 
                     b.HasOne("OMP_API.Models.SpecialGroup", "SpecialGroup")
                         .WithMany("SpecialGroupsUsers")
                         .HasForeignKey("SpecialGroupId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__speci__7928F116");
+                        .HasConstraintName("FK__SpecialGr__speci__318258D2");
 
                     b.HasOne("OMP_API.Models.User", "User")
                         .WithMany("SpecialGroupsUsers")
                         .HasForeignKey("UserId")
                         .IsRequired()
-                        .HasConstraintName("FK__SpecialGr__userI__7A1D154F");
+                        .HasConstraintName("FK__SpecialGr__userI__32767D0B");
 
                     b.Navigation("Customer");
 
@@ -2114,13 +2132,13 @@ namespace OMP_API.Migrations
                         .WithMany("Tasks")
                         .HasForeignKey("TaskRecipient")
                         .IsRequired()
-                        .HasConstraintName("FK__Tasks__TaskRecip__520F23F5");
+                        .HasConstraintName("FK__Tasks__TaskRecip__0A688BB1");
 
                     b.HasOne("OMP_API.Models.Group", "TaskSenderNavigation")
                         .WithMany("Tasks")
                         .HasForeignKey("TaskSender")
                         .IsRequired()
-                        .HasConstraintName("FK__Tasks__TaskSende__5303482E");
+                        .HasConstraintName("FK__Tasks__TaskSende__0B5CAFEA");
 
                     b.Navigation("TaskRecipientNavigation");
 
@@ -2129,16 +2147,10 @@ namespace OMP_API.Migrations
 
             modelBuilder.Entity("OMP_API.Models.User", b =>
                 {
-                    b.HasOne("OMP_API.Models.Country", "Country")
-                        .WithMany("Users")
-                        .HasForeignKey("CountryId")
-                        .HasConstraintName("FK__Users__countryId__47919582");
-
                     b.HasOne("OMP_API.Models.Customer", "Customer")
                         .WithMany("Users")
                         .HasForeignKey("CustomerId")
-                        .IsRequired()
-                        .HasConstraintName("FK__Users__customerI__469D7149");
+                        .HasConstraintName("FK__Users__customerI__7FEAFD3E");
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
                         .WithOne()
@@ -2150,9 +2162,7 @@ namespace OMP_API.Migrations
                     b.HasOne("OMP_API.Models.Position", "Position")
                         .WithMany("Users")
                         .HasForeignKey("PositionId")
-                        .HasConstraintName("FK__Users__positionI__4885B9BB");
-
-                    b.Navigation("Country");
+                        .HasConstraintName("FK__Users__positionI__00DF2177");
 
                     b.Navigation("Customer");
 
@@ -2161,22 +2171,6 @@ namespace OMP_API.Migrations
 
             modelBuilder.Entity("OMP_API.Models.ContractType", b =>
                 {
-                    b.Navigation("Payrolls");
-                });
-
-            modelBuilder.Entity("OMP_API.Models.Country", b =>
-                {
-                    b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("OMP_API.Models.Currency", b =>
-                {
-                    b.Navigation("DebitNotes");
-
-                    b.Navigation("InvoiceCosts");
-
-                    b.Navigation("InvoiceIncomes");
-
                     b.Navigation("Payrolls");
                 });
 
@@ -2201,6 +2195,10 @@ namespace OMP_API.Migrations
                     b.Navigation("Payrolls");
 
                     b.Navigation("Positions");
+
+                    b.Navigation("ReccuringCostInvoices");
+
+                    b.Navigation("ReccuringIncomeInvoices");
 
                     b.Navigation("SpecialGroups");
 

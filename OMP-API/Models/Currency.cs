@@ -30,4 +30,16 @@ public partial class Currency
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
+
+    [InverseProperty("CurrencyNavigation")]
+    public virtual ICollection<DebitNote> DebitNotes { get; set; } = new List<DebitNote>();
+
+    [InverseProperty("Currency")]
+    public virtual ICollection<InvoiceCost> InvoiceCosts { get; set; } = new List<InvoiceCost>();
+
+    [InverseProperty("Currency")]
+    public virtual ICollection<InvoiceIncome> InvoiceIncomes { get; set; } = new List<InvoiceIncome>();
+
+    [InverseProperty("Currency")]
+    public virtual ICollection<Payroll> Payrolls { get; set; } = new List<Payroll>();
 }

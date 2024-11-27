@@ -63,12 +63,6 @@ public partial class Customer
     public virtual ICollection<Position> Positions { get; set; } = new List<Position>();
 
     [InverseProperty("Customer")]
-    public virtual ICollection<ReccuringCostInvoice> ReccuringCostInvoices { get; set; } = new List<ReccuringCostInvoice>();
-
-    [InverseProperty("Customer")]
-    public virtual ICollection<ReccuringIncomeInvoice> ReccuringIncomeInvoices { get; set; } = new List<ReccuringIncomeInvoice>();
-
-    [InverseProperty("Customer")]
     public virtual ICollection<SpecialGroup> SpecialGroups { get; set; } = new List<SpecialGroup>();
 
     [InverseProperty("Customer")]
