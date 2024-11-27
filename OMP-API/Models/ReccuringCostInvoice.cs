@@ -1,0 +1,51 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace OMP_API.Models;
+
+[Table("ReccuringCostInvoice")]
+public partial class ReccuringCostInvoice
+{
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Column("invoiceId")]
+    public int InvoiceId { get; set; }
+
+    [Column("description")]
+    public string Description { get; set; } = null!;
+
+    [Column("frequency")]
+    [StringLength(50)]
+    public string Frequency { get; set; } = null!;
+
+    [Column("nextDueDate", TypeName = "datetime")]
+    public DateTime NextDueDate { get; set; }
+
+    [Column("customerId")]
+    public int CustomerId { get; set; }
+
+    [Column("creationDate", TypeName = "datetime")]
+    public DateTime CreationDate { get; set; }
+
+    [Column("editDate", TypeName = "datetime")]
+    public DateTime? EditDate { get; set; }
+
+    [Column("deleteDate", TypeName = "datetime")]
+    public DateTime? DeleteDate { get; set; }
+
+    [Column("isDeleted")]
+    public bool IsDeleted { get; set; }
+
+    [ForeignKey("CustomerId")]
+    [InverseProperty("ReccuringCostInvoices")]
+    public virtual Customer Customer { get; set; } = null!;
+
+    [ForeignKey("InvoiceId")]
+    [InverseProperty("ReccuringCostInvoices")]
+    public virtual InvoiceCost Invoice { get; set; } = null!;
+}
