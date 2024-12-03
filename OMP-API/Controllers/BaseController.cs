@@ -21,7 +21,7 @@ namespace OMP_API.Controllers
         public virtual async Task<ActionResult<IEnumerable<T>>> GetAllAsync()
         {
             List<T> entities = await _context.Set<T>()
-                                                .Where(x => x.IsActive == true)
+                                                .Where(x => x.IsDeleted != true)
                                                 .ToListAsync();
             return Ok(entities);
         }
@@ -34,7 +34,7 @@ namespace OMP_API.Controllers
                 return BadRequest();
             }
 
-            T? item = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && e.IsActive == true);
+            T? item = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && e.IsDeleted != true);
             if (item == null)
             {
                 return NotFound();
@@ -64,7 +64,7 @@ namespace OMP_API.Controllers
                 return BadRequest();
             }
 
-            T? item = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && e.IsActive == true);
+            T? item = await _context.Set<T>().FirstOrDefaultAsync(e => e.Id == id && e.IsDeleted != true);
 
             if (item == null)
             {
@@ -72,7 +72,7 @@ namespace OMP_API.Controllers
             }
 
             _context.Entry(item).CurrentValues.SetValues(entity);
-            item.UpdatedAt = DateTime.Now;
+            item.EditDate = DateTime.Now;
 
             _context.Set<T>().Update(item);
             await _context.SaveChangesAsync();
@@ -94,7 +94,7 @@ namespace OMP_API.Controllers
                 return NotFound();
             }
 
-            entity.IsActive = false;
+            entity.IsDeleted = true;
             await _context.SaveChangesAsync();
             return Ok("entity deleted successfully");
         }
