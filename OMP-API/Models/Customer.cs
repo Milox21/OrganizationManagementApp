@@ -70,4 +70,7 @@ public partial class Customer
 
     [InverseProperty("Customer")]
     public virtual ICollection<User> Users { get; set; } = new List<User>();
+
+    [InverseProperty(nameof(CustomerModule.Customer))]
+    public virtual ICollection<CustomerModule> CustomerModules { get; set; } = new List<CustomerModule>();
 }

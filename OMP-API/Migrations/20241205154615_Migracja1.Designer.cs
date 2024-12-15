@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OMP_API.Models.Contexts;
 
@@ -11,9 +12,11 @@ using OMP_API.Models.Contexts;
 namespace OMP_API.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20241205154615_Migracja1")]
+    partial class Migracja1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -411,32 +414,6 @@ namespace OMP_API.Migrations
                         .HasName("PK__Customer__3213E83F35E24FBE");
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("OMP_API.Models.CustomerModule", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int")
-                        .HasColumnName("customerId");
-
-                    b.Property<int>("ModuleId")
-                        .HasColumnType("int")
-                        .HasColumnName("moduleId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.HasIndex("ModuleId");
-
-                    b.ToTable("CustomerModules");
                 });
 
             modelBuilder.Entity("OMP_API.Models.DebitNote", b =>
@@ -974,31 +951,6 @@ namespace OMP_API.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("InvoiceTaxRates");
-                });
-
-            modelBuilder.Entity("OMP_API.Models.Module", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("description");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Modules");
                 });
 
             modelBuilder.Entity("OMP_API.Models.Notification", b =>
@@ -1852,25 +1804,6 @@ namespace OMP_API.Migrations
                     b.Navigation("Customer");
                 });
 
-            modelBuilder.Entity("OMP_API.Models.CustomerModule", b =>
-                {
-                    b.HasOne("OMP_API.Models.Customer", "Customer")
-                        .WithMany("CustomerModules")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("OMP_API.Models.Module", "Module")
-                        .WithMany("CustomerModules")
-                        .HasForeignKey("ModuleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-
-                    b.Navigation("Module");
-                });
-
             modelBuilder.Entity("OMP_API.Models.DebitNote", b =>
                 {
                     b.HasOne("OMP_API.Models.Currency", "CurrencyNavigation")
@@ -2254,8 +2187,6 @@ namespace OMP_API.Migrations
                 {
                     b.Navigation("ContractTypes");
 
-                    b.Navigation("CustomerModules");
-
                     b.Navigation("DebitNotes");
 
                     b.Navigation("Errors");
@@ -2305,11 +2236,6 @@ namespace OMP_API.Migrations
                     b.Navigation("InvoiceCosts");
 
                     b.Navigation("InvoiceIncomes");
-                });
-
-            modelBuilder.Entity("OMP_API.Models.Module", b =>
-                {
-                    b.Navigation("CustomerModules");
                 });
 
             modelBuilder.Entity("OMP_API.Models.Position", b =>

@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text;
 
-namespace OmpAdminWeb.Services
+namespace OMPWebAppAdmin.Services
 {
     public class ApiConnectionService<T> where T : class
     {

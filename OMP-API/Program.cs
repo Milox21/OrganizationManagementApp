@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OMP_API.Services;
 using OMP_API.Models.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,6 +18,7 @@ builder.Services.AddAuthorizationBuilder();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<DatabaseContext>(options => options.UseSqlServer(connectionString));
+
 builder.Services.AddIdentityCore<IdentityUser>()
  .AddRoles<IdentityRole>()
  .AddEntityFrameworkStores<DatabaseContext>()
@@ -24,6 +26,12 @@ builder.Services.AddIdentityCore<IdentityUser>()
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    await SeedingService.SeedRolesAsync(services);
+}
 
 app.MapIdentityApi<IdentityUser>();
 

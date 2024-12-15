@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OMP_API.Models.Contexts;
 
@@ -11,9 +12,11 @@ using OMP_API.Models.Contexts;
 namespace OMP_API.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    partial class DatabaseContextModelSnapshot : ModelSnapshot
+    [Migration("20241215144027_migration10")]
+    partial class migration10
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -426,6 +429,9 @@ namespace OMP_API.Migrations
                         .HasColumnType("int")
                         .HasColumnName("customerId");
 
+                    b.Property<int?>("CustomerId1")
+                        .HasColumnType("int");
+
                     b.Property<int>("ModuleId")
                         .HasColumnType("int")
                         .HasColumnName("moduleId");
@@ -433,6 +439,8 @@ namespace OMP_API.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
+
+                    b.HasIndex("CustomerId1");
 
                     b.HasIndex("ModuleId");
 
@@ -1855,10 +1863,14 @@ namespace OMP_API.Migrations
             modelBuilder.Entity("OMP_API.Models.CustomerModule", b =>
                 {
                     b.HasOne("OMP_API.Models.Customer", "Customer")
-                        .WithMany("CustomerModules")
+                        .WithMany()
                         .HasForeignKey("CustomerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("OMP_API.Models.Customer", null)
+                        .WithMany("CustomerModules")
+                        .HasForeignKey("CustomerId1");
 
                     b.HasOne("OMP_API.Models.Module", "Module")
                         .WithMany("CustomerModules")

@@ -1,0 +1,170 @@
+﻿@inherits LayoutComponentBase
+
+@using OMPWebAppAdmin.Services
+@inject AuthorizationService AuthorizationService 
+
+@rendermode InteractiveServer
+
+@if (AuthorizationService.isLogged)
+{
+    <RadzenLayout>
+        <RadzenHeader>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Style="width: 100%;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                    <RadzenLabel Text="OMP Admin Panel" />
+                </RadzenStack>
+                <RadzenLabel Text="Admin" Style="margin-left: auto; margin-right: 1rem;" />
+            </RadzenStack>
+
+
+        </RadzenHeader>
+        <RadzenSidebar Responsive="false" Style="width: max-content">
+            <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+                <RadzenPanelMenuItem Text="Counter" Icon="home" Click="@(() => currentPage = "Counter")" />
+                <RadzenPanelMenuItem Text="Home" Icon="dashboard" Click="@(() => currentPage = "Home")" />
+                <RadzenPanelMenuItem Text="Other" Icon="auto_awesome" >
+                    <RadzenPanelMenuItem Text="Weather" Icon="color_lens" Click="@(() => currentPage = "Weather")" />
+                </RadzenPanelMenuItem>
+            </RadzenPanelMenu>
+        </RadzenSidebar>
+        <RadzenBody>
+            <div class="rz-p-4">
+                @switch (currentPage)
+                {
+                    case "Counter": <OMPWebAppAdmin.Components.Pages.Counter/> break;
+                    case "Home": <OMPWebAppAdmin.Components.Pages.Home /> break;
+                    case "Weather":<OMPWebAppAdmin.Components.Pages.Weather /> break;
+                }
+            </div>
+        </RadzenBody>
+        <RadzenFooter>
+            Footer
+        </RadzenFooter>
+    </RadzenLayout>
+
+    @code {
+        private string currentPage = string.Empty;
+        bool sidebarExpanded = true;
+
+    }
+
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="" class="reload">Reload</a>
+        <a class="dismiss">🗙</a>
+    </div>
+
+}
+else
+{
+    <RadzenCard Style="width: 400px; margin: 50px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
+        @if (showLogin)
+        {
+            <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+                <RadzenIcon Icon="lock" Style="font-size: 36px; color: #0078D7;" />
+                <h2 style="margin: 10px 0;">Welcome</h2>
+                <p style="color: gray;">OMP</p>
+            </div>
+
+            <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@LoginMe" Style="padding: 20px; text-align: center;">
+                <RadzenFieldset Legend="Login Data">
+                    <RadzenText Style="margin-top: 15px; color: red"> @loginError </RadzenText>
+                    <RadzenText Style="margin-top: 15px; color: green"> @registerSuccess </RadzenText>
+                    <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" />
+                    <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" />
+                </RadzenFieldset>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <RadzenButton Text="Login" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <RadzenButton Text="Register" Click="() => ToggleView()" Style=" font-size: 14px;" />
+                </div>
+            </RadzenTemplateForm>
+        }
+        else
+        {
+            <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+                <RadzenIcon Icon="lock" Style="font-size: 36px; color: #0078D7;" />
+                <h2 style="margin: 10px 0;">Register</h2>
+                <p style="color: gray;">OMP</p>
+            </div>
+
+            <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@RegisterMe" Style="padding: 20px; text-align: center;">
+                <RadzenFieldset Legend="Register Data">
+                    <RadzenText Style="margin-top: 15px; color: red"> @registerError </RadzenText>
+                    <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" />
+                    <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" />
+                    <RadzenTextBox @bind-Value="loginData.Password2" Placeholder="confirm password" Type="password" Style="margin-bottom: 15px;" />
+                </RadzenFieldset>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <RadzenButton Text="Register" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <RadzenButton Text="Login" Click="() => ToggleView()" Style=" font-size: 14px;" />
+                </div>
+            </RadzenTemplateForm>
+        }
+    </RadzenCard>
+
+    @code {
+    private LoginObject loginData = new();
+    private bool showLogin = true;
+    private string loginError = " ";
+    private string registerError = " ";
+    private string registerSuccess = " ";
+
+    private void ToggleView()
+    {
+        showLogin = !showLogin;
+    }
+
+    private async Task LoginMe()
+    {
+        string loginResult = await AuthorizationService.Login(loginData.Username, loginData.Password);
+
+        registerSuccess = " ";
+
+        if (loginResult != "OK")
+        {
+            loginError = loginResult;
+        }
+        
+    }
+
+    private async Task RegisterMe()
+    {
+        if(loginData.Password == loginData.Password2)
+        {
+            string registerResult = await AuthorizationService.Register(loginData.Username, loginData.Password);
+            if (registerResult != "OK")
+            {
+                registerError = registerResult;
+            }
+            else
+            {
+                ToggleView();
+                registerSuccess = "User Registered";
+            }
+        }
+        else
+        {
+            registerError = "Passwords must be the same";
+        }
+    }
+
+    private class LoginObject
+    {
+        public string Username = "";
+        public string Password = "";
+        public string Password2 = "";
+    }
+}
+
+}
+

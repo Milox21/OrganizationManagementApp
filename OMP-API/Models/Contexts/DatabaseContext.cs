@@ -72,6 +72,10 @@ public partial class DatabaseContext : IdentityDbContext<IdentityUser>
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<Module> Modules { get; set; }
+
+    public virtual DbSet<CustomerModule> CustomerModules { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
         => optionsBuilder.UseSqlServer("Server=MILOX\\SQLEXPRESS;User ID=MILOX\\milox;Database=OrganizationManagementAppDatabase;TrustServerCertificate=True;Integrated Security=True");
@@ -408,7 +412,22 @@ public partial class DatabaseContext : IdentityDbContext<IdentityUser>
             entity.HasOne<IdentityUser>().WithOne().HasForeignKey<User>(u => u.IdentityUserId).HasConstraintName("FK__Users__IdentityUser");
         });
 
+        modelBuilder.Entity<CustomerModule>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.Customer)
+                .WithMany(c => c.CustomerModules)
+                .HasForeignKey(e => e.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Module)
+                .WithMany(m => m.CustomerModules)
+                .HasForeignKey(e => e.ModuleId);
+        });
+
         OnModelCreatingPartial(modelBuilder);
+
     }
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
