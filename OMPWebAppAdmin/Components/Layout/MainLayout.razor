@@ -21,19 +21,25 @@
         </RadzenHeader>
         <RadzenSidebar Responsive="false" Style="width: max-content">
             <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
-                <RadzenPanelMenuItem Text="Counter" Icon="home" Click="@(() => currentPage = "Counter")" />
-                <RadzenPanelMenuItem Text="Home" Icon="dashboard" Click="@(() => currentPage = "Home")" />
-                <RadzenPanelMenuItem Text="Other" Icon="auto_awesome" >
-                    <RadzenPanelMenuItem Text="Weather" Icon="color_lens" Click="@(() => currentPage = "Weather")" />
+               
+                
+                <RadzenPanelMenuItem Text="Admin" Icon="auto_awesome" >
+                    <RadzenPanelMenuItem Text="Model Admin Panel" Icon="home" Click="@(() => currentPage = "CustomerModuleAdmin")" />
+                    <RadzenPanelMenuItem Text="Customer Admin Panel" Icon="home" Click="@(() => currentPage = "CustomerAdmin")" />
                 </RadzenPanelMenuItem>
+                <RadzenPanelMenuItem Text="Errors" Icon="dashboard" Click="@(() => currentPage = "Home")" />
             </RadzenPanelMenu>
         </RadzenSidebar>
         <RadzenBody>
             <div class="rz-p-4">
                 @switch (currentPage)
                 {
-                    case "Counter": <OMPWebAppAdmin.Components.Pages.Counter/> break;
-                    case "Home": <OMPWebAppAdmin.Components.Pages.Home /> break;
+                    case "CustomerModuleAdmin":
+                        <OMPWebAppAdmin.Components.Pages.CustomerModuleAdmin />
+                        break;
+                    case "CustomerAdmin":
+                        <OMPWebAppAdmin.Components.Pages.CustomerAdmin />
+                        break;
                     case "Weather":<OMPWebAppAdmin.Components.Pages.Weather /> break;
                 }
             </div>
@@ -41,6 +47,7 @@
         <RadzenFooter>
             Footer
         </RadzenFooter>
+        <RadzenDialog/>
     </RadzenLayout>
 
     @code {

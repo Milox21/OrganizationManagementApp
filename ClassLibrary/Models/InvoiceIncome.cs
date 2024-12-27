@@ -1,0 +1,71 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace ClassLibrary.Models;
+
+[Table("InvoiceIncome")]
+public partial class InvoiceIncome
+{
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Column("name")]
+    [StringLength(255)]
+    public string Name { get; set; } = null!;
+
+    [Column("unit")]
+    [StringLength(50)]
+    public string Unit { get; set; } = null!;
+
+    [Column("quantity", TypeName = "decimal(10, 2)")]
+    public decimal Quantity { get; set; }
+
+    [Column("priceNetto", TypeName = "decimal(10, 2)")]
+    public decimal PriceNetto { get; set; }
+
+    [Column("valueNetto", TypeName = "decimal(10, 2)")]
+    public decimal ValueNetto { get; set; }
+
+    [Column("vatTax")]
+    public int? VatTax { get; set; }
+
+    [Column("vatTaxValue", TypeName = "decimal(10, 2)")]
+    public decimal? VatTaxValue { get; set; }
+
+    [Column("valueBrutto", TypeName = "decimal(10, 2)")]
+    public decimal? ValueBrutto { get; set; }
+
+    [Column("customerId")]
+    public int CustomerId { get; set; }
+
+    [Column("currencyId")]
+    public int? CurrencyId { get; set; }
+
+    [Column("creationDate", TypeName = "datetime")]
+    public DateTime CreationDate { get; set; }
+
+    [Column("editDate", TypeName = "datetime")]
+    public DateTime? EditDate { get; set; }
+
+    [Column("deleteDate", TypeName = "datetime")]
+    public DateTime? DeleteDate { get; set; }
+
+    [Column("isDeleted")]
+    public bool IsDeleted { get; set; }
+
+    [ForeignKey("CurrencyId")]
+    [InverseProperty("InvoiceIncomes")]
+    public virtual Currency? Currency { get; set; }
+
+    [ForeignKey("CustomerId")]
+    [InverseProperty("InvoiceIncomes")]
+    public virtual Customer Customer { get; set; } = null!;
+
+    [InverseProperty("Invoice")]
+    public virtual ICollection<ReccuringIncomeInvoice> ReccuringIncomeInvoices { get; set; } = new List<ReccuringIncomeInvoice>();
+
+    [ForeignKey("VatTax")]
+    [InverseProperty("InvoiceIncomes")]
+    public virtual InvoiceTaxRate? VatTaxNavigation { get; set; }
+}

@@ -19,7 +19,7 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<ThemeService>();
 
-
+builder.Services.AddScoped(typeof(ApiConnectionService<>));
 builder.Services.AddScoped<AuthorizationService>();
 var app = builder.Build();
 

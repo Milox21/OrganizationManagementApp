@@ -1,0 +1,80 @@
+﻿@page "/CustomerAdmin"
+@using ClassLibrary.DTO
+@using OMPWebAppAdmin.Services
+
+@inject DialogService DialogService
+@inject ApiConnectionService<CustomerDTO> ApiServiceCustomer
+
+<div class="rz-p-4 rz-text-align-left">
+    <RadzenButton Text="Add Customer" ButtonStyle="ButtonStyle.Secondary" Click=@NewCustomerDialog />
+</div>
+
+<RadzenDataGrid Data="@Customers" TItem="CustomerDTO" AllowVirtualization="true" Style="height:400px"
+AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
+AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdateRow">
+    <Columns>
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="Name" Title="Name" Width="200px">
+            <EditTemplate Context="customer">
+                <RadzenTextBox @bind-Value="customer.Name" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="CreationDate" Title="Creation Date" Width="200px">
+            <EditTemplate Context="customer">
+                <RadzenDatePicker @bind-Value="customer.CreationDate" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Title="Actions" Width="100px">
+            <Template Context="customer">
+                <RadzenButton Text="Delete" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Danger"
+                Click="@(async () => await DeleteCustomer(customer))" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    List<CustomerDTO>? Customers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        Customers = await ApiServiceCustomer.GetResources("/api/Customer");
+    }
+
+    public async Task NewCustomerDialog()
+    {
+        await DialogService.OpenAsync<AddCustomerDialog>("Add Customer", new Dictionary<string, object>(), new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px" 
+            });
+    }
+
+    private async Task OnUpdateRow(CustomerDTO customer)
+    {
+        if (customer == null)
+        {
+            return;
+        }
+        await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
+    }
+
+    private async Task DeleteCustomer(CustomerDTO customer)
+    {
+        if (customer == null)
+        {
+            return;
+        }
+
+        customer.IsDeleted = true;
+        customer.Password = "";
+        customer.Modules = new List<ModuleDTO>(); 
+
+        await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
+
+        Customers.Remove(customer);
+        StateHasChanged();
+    }
+}

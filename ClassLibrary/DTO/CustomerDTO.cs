@@ -1,13 +1,11 @@
-﻿using OMP_API.Models;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.ComponentModel.DataAnnotations;
-using OMP_API.Models.ModelInterfaces;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using ClassLibrary.Models.ModelInterfaces;
 
-namespace OMP_API.DTO
+namespace ClassLibrary.DTO
 {
     public class CustomerDTO : IBaseModel
     {
+
         [JsonPropertyName("id")]
         public int Id { get; set; }
         [JsonPropertyName("name")]
@@ -24,5 +22,6 @@ namespace OMP_API.DTO
         public bool IsDeleted { get; set; }
         [JsonPropertyName("Modules")]
         public virtual ICollection<ModuleDTO> Modules { get; set; } = new List<ModuleDTO>();
+
     }
 }

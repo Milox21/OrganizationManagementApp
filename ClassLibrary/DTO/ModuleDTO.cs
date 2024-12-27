@@ -1,19 +1,25 @@
-﻿using OMP_API.Models;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
-using OMP_API.Models.ModelInterfaces;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using ClassLibrary.Models;
+using ClassLibrary.Models.ModelInterfaces;
 using System.Text.Json.Serialization;
 
-namespace OMP_API.DTO
+namespace ClassLibrary.DTO
 {
-    public class CustomerDTO : IBaseModel
+    public class ModuleDTO : IBaseModel
     {
         [JsonPropertyName("id")]
         public int Id { get; set; }
         [JsonPropertyName("name")]
-        public string Name { get; set; } = null!;
-        [JsonPropertyName("password")]
-        public string Password { get; set; } = null!;
+        public string Name { get; set; } = string.Empty;
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; } = string.Empty;
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
         [JsonPropertyName("editDate")]
@@ -22,7 +28,5 @@ namespace OMP_API.DTO
         public DateTime? DeleteDate { get; set; }
         [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
-        [JsonPropertyName("Modules")]
-        public virtual ICollection<ModuleDTO> Modules { get; set; } = new List<ModuleDTO>();
     }
 }
