@@ -6,11 +6,12 @@
 @inject ApiConnectionService<CustomerDTO> ApiServiceCustomer
 @inject ApiConnectionService<ModuleDTO> ApiServiceModule
 
-<RadzenDataGrid Data="@Customers" AllowVirtualization="true" Style="height:400px"
+<RadzenDataGrid Data="@Customers" AllowVirtualization="true" Style="height:800px"
                 AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
                 AllowSorting="true">
     <Columns>
         <RadzenDataGridColumn Property="@nameof(CustomerDTO.Name)" Title="Name" />
+        <RadzenDataGridColumn Property="@nameof(CustomerDTO.Email)" Title="Email" />
         @foreach (ModuleDTO module in Modules)
         {
             <RadzenDataGridColumn Title="@module.Name">
@@ -19,7 +20,7 @@
                         bool isToggled = customer.Modules.Any(m => m.Name == module.Name);
                     }
                     <RadzenToggleButton @bind-Value=@isToggled
-                                        Change="@(async (value) => await UpdateModul(customer, module, (bool)value))"
+                                        Change="@(async (value) => await UpdateModule(customer, module, (bool)value))"
                                         Text="@(isToggled ? "Has Access" : "Has Not Access" )" />
                 </Template>
             </RadzenDataGridColumn>
@@ -39,7 +40,7 @@
         Customers = await ApiServiceCustomer.GetResources("/api/Customer");
     }
 
-    private async Task UpdateModul(CustomerDTO customer, ModuleDTO module, bool isToggled)
+    private async Task UpdateModule(CustomerDTO customer, ModuleDTO module, bool isToggled)
     {
         if (isToggled)
         {
@@ -50,11 +51,10 @@
         }
         else
         {
-            // Remove the module from the customer's module list
+            
             customer.Modules.Remove(customer.Modules.FirstOrDefault(m => m.Name == module.Name));
         }
-        customer.Password = "";
-        // Call your API to persist the changes
+        
         await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
     }
 }

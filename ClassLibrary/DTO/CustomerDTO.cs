@@ -12,6 +12,19 @@ namespace ClassLibrary.DTO
         public string Name { get; set; } = null!;
         [JsonPropertyName("password")]
         public string Password { get; set; } = null!;
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; } 
+
+        [JsonPropertyName("phone_contact")]
+        public string PhoneContact { get; set; } 
+
+        [JsonPropertyName("address")]
+        public string Address { get; set; } 
+
+        [JsonPropertyName("location")]
+        public string Location { get; set; }
+
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
         [JsonPropertyName("editDate")]

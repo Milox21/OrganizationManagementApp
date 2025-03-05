@@ -20,6 +20,21 @@ public partial class Customer
     [StringLength(255)]
     public string Password { get; set; } = null!;
 
+    [Column("email")]
+    [StringLength(255)]
+    public string Email { get; set; } = null!; 
+
+    [Column("phone_contact")]
+    [StringLength(50)]
+    public string PhoneContact { get; set; } = null!; 
+
+    [Column("address")]
+    [StringLength(500)]
+    public string Address { get; set; } = null!;
+
+    [Column("location")]
+    [StringLength(255)]
+    public string Location { get; set; } = null!; 
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 

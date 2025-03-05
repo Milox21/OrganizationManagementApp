@@ -1,0 +1,83 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<GroupDTO> ApiServiceGroup
+@inject ApiConnectionService<UserDTO> ApiServiceUser
+@inject ApiConnectionService<GroupsUserDTO> ApiServiceGU
+
+
+<RadzenCard>
+    <RadzenRow>
+        <RadzenColumn Size="6">
+            <h3>Group Members</h3>
+            <RadzenDataList Data="groupMembers" TItem="UserDTO">
+                <Template Context="user">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>@user.Name</span>
+                        <RadzenButton Text="Remove" Click="() => RemoveUserFromGroup(user)" ButtonStyle="ButtonStyle.Danger" />
+                    </div>
+                </Template>
+            </RadzenDataList>
+        </RadzenColumn>
+
+        <RadzenColumn Size="6">
+            <h3>Add User</h3>
+            <RadzenDropDown @bind-Value="selectedUserId" Data="allUsers" ValueProperty="Id">
+                <Template Context="user">
+                    @user.Name @user.Surname
+                </Template>
+            </RadzenDropDown>
+            <RadzenButton Text="Add" Click="AddUserToGroup" ButtonStyle="ButtonStyle.Primary" Disabled="@(selectedUserId == null)" />
+        </RadzenColumn>
+    </RadzenRow>
+    <RadzenButton Text="Close" Click="Close" ButtonStyle="ButtonStyle.Success" />
+</RadzenCard>
+
+
+
+@code {
+    [Parameter] public GroupDTO group { get; set; }
+    private List<UserDTO> groupMembers = new();
+    private List<UserDTO> allUsers = new();
+    private int? selectedUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        groupMembers = await ApiServiceUser.GetResources($"/api/User/GetByGroup/{group.Id}");
+        allUsers = await ApiServiceUser.GetResources($"/api/User/GetByCustomer/{AuthService.userDTO.CustomerId}");
+
+        if (allUsers != null && groupMembers != null)
+        {
+            allUsers = allUsers.Where(user => !groupMembers.Any(member => member.Id == user.Id)).ToList();
+        }
+    }
+
+    private async Task AddUserToGroup()
+    {
+        if (selectedUserId == null)
+            return;
+
+        await ApiServiceGU.PostResource($"/api/GroupUser/AddToGroup/{group.Id}/{selectedUserId}", null);
+        await LoadData();
+
+    }
+
+    private async Task RemoveUserFromGroup(UserDTO user)
+    {
+        await ApiServiceGU.DeleteResource($"/api/GroupUser/DeleteFromGroup/{group.Id}/{user.Id}");
+        await LoadData();
+    }
+
+    private async Task Close()
+    {
+        DialogService.Close(true);
+    }
+}

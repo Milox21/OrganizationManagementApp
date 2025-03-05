@@ -1,0 +1,40 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<GroupDTO> ASGroup
+
+
+<RadzenTemplateForm TItem="GroupDTO" Data="@group" Submit="@SaveItem" Style="padding: 20px;">
+
+    <RadzenFieldset Legend="Group Details">
+        <RadzenLabel Text="Title" />
+        <RadzenTextBox @bind-Value="group.Title" Placeholder="Enter group name" Style="width: 100%;" />
+
+        <RadzenLabel Text="Address" Style="margin-top: 10px;" />
+        <RadzenTextBox @bind-Value="group.Description" Placeholder="Enter description" Style="width: 100%;" />
+    </RadzenFieldset>
+
+    <!-- Submit and Cancel Buttons -->
+    <div style="text-align: center; margin-top: 20px;">
+        <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-right: 10px; background-color: #0078D7; color: white;" />
+        <RadzenButton Text="Cancel" Click="@((args) => DialogService.Close(false))" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</RadzenTemplateForm>
+
+
+@code {
+    private GroupDTO group = new GroupDTO();
+
+    private async Task SaveItem()
+    {
+        group.IsDeleted = false;
+        group.CustomerId = AuthService.userDTO.CustomerId;
+        group.CreationDate = DateTime.Now;
+
+        await ASGroup.PostResource("/api/Group/", group);
+
+        DialogService.Close(false);
+    }
+}

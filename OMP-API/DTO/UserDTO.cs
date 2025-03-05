@@ -14,6 +14,8 @@ namespace OMP_API.DTO
         public int? PositionId { get; set; }
         public int CustomerId { get; set; }
         public int? CountryId { get; set; }
+        public string? CompanyName { get; set; }
+        public string? Email { get; set; }
         public DateTime CreationDate { get; set; }
         public DateTime? EditDate { get; set; }
         public DateTime? DeleteDate { get; set; }

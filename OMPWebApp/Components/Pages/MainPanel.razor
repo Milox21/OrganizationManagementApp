@@ -1,0 +1,121 @@
+﻿@inherits LayoutComponentBase
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject AuthorizationService AuthorizationService
+@inject ApiConnectionService<GroupDTO> ApiGroupService
+@inject NavigationManager NavigationManager
+
+@if (!AuthorizationService.isLogged)
+{
+    <OMPWebApp.Components.Layout.MainLayout></OMPWebApp.Components.Layout.MainLayout>
+}
+else
+{
+    <RadzenLayout>
+        <RadzenHeader>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Style="width: 100%;">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+                    <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+                    <RadzenLabel Text="OMP" Style="margin-right: 10px" />
+                </RadzenStack>
+
+                <RadzenLabel Text="@AuthorizationService.userDTO.CompanyName" />
+                <RadzenLabel Text="@AuthorizationService.userDTO.Role" />
+                <div class="rz-text-align-center" style="margin-left: auto; margin-right: 1rem;">
+                    <RadzenProfileMenu Click="@ProfileMenuClick">
+                        <Template>
+                            <RadzenText Style="color:white; margin-top:10px">@AuthorizationService.userDTO.Name @AuthorizationService.userDTO.Surname</RadzenText>
+                        </Template>
+                        <ChildContent>
+                            <RadzenProfileMenuItem Text="Profile" Icon="account_circle"></RadzenProfileMenuItem>
+                            <RadzenProfileMenuItem Text="Logout" Icon="line_weight"></RadzenProfileMenuItem>
+                        </ChildContent>
+                    </RadzenProfileMenu>
+                </div>
+            </RadzenStack>
+        </RadzenHeader>
+        <RadzenSidebar Responsive="false" Style="width: max-content">
+            <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+
+                @if (AuthorizationService.userDTO.Role == "Manager")
+                {
+                    <RadzenPanelMenuItem Text="Manager Panel" Icon="auto_awesome">
+                        <RadzenPanelMenuItem Text="Company Users" Icon="home" Click="@(() => NavigationManager.NavigateTo("useradmin"))" />
+                        <RadzenPanelMenuItem Text="Company Groups" Icon="home" Click="@(() => NavigationManager.NavigateTo("groups"))" />
+                        <RadzenPanelMenuItem Text="Company Constants" Icon="home" Click="@(() => NavigationManager.NavigateTo("constants"))" />
+                    </RadzenPanelMenuItem>
+                }
+
+                <RadzenPanelMenuItem Text="Groups" Icon="auto_awesome" Click="@LoadData">
+                    @foreach (GroupDTO group in groups)
+                    {
+                        <RadzenPanelMenuItem Text="@group.Title" Icon="home" Click="@(() => NavigationManager.NavigateTo($"group/{group.Id}"))" />
+                    }
+                </RadzenPanelMenuItem>
+
+                <RadzenPanelMenuItem Text="Financial Module" Icon="auto_awesome">
+                    <RadzenPanelMenuItem Text="Invoice Calculator" Icon="home" Click="@(() => NavigationManager.NavigateTo("invoice-calculator"))" />
+                    <RadzenPanelMenuItem Text="Invoices" Icon="home" Click="@(() => NavigationManager.NavigateTo("invoices"))" />
+                    <RadzenPanelMenuItem Text="Invoice Statistics" Icon="home" Click="@(() => NavigationManager.NavigateTo("invoice-statistics"))" />
+                </RadzenPanelMenuItem>
+
+                <RadzenPanelMenuItem Text="Errors" Icon="dashboard" Click="@(() => NavigationManager.NavigateTo("errors"))" />
+            </RadzenPanelMenu>
+        </RadzenSidebar>
+        <RadzenBody>
+            <div class="rz-p-4">
+                @Body
+            </div>
+        </RadzenBody>
+        <RadzenFooter>
+            Property of Kamil Woźny
+        </RadzenFooter>
+        <RadzenDialog />
+    </RadzenLayout>
+}
+
+@code {
+    bool sidebarExpanded = true;
+    List<GroupDTO> groups = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        groups = await ApiGroupService.GetResources($"/api/Group/GetByUser/{AuthorizationService.userDTO.Id}");
+    }
+
+    public async Task NewProfileDialog()
+    {
+        await DialogService.OpenAsync<ProfileDialog>
+        (
+            "Profile",
+            new Dictionary<string, object>
+                    {
+                { "User", AuthorizationService.userDTO }
+                    },
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "512px"
+                });
+    }
+
+    public async Task ProfileMenuClick(RadzenProfileMenuItem item)
+    {
+        switch (item.Text)
+        {
+            case "Profile":
+                await NewProfileDialog();
+                break;
+            case "Logout":
+                await AuthorizationService.Logoff();
+                break;
+        }
+    }
+}

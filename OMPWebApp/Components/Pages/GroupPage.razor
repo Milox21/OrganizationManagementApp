@@ -1,0 +1,64 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject ApiConnectionService<UserDTO> ApiServiceUser
+@inject ApiConnectionService<TaskDTO> ApiServiceTask
+
+
+<RadzenCard>
+    <h3>@Group.Title</h3>
+    <RadzenRow>
+        <!-- First Column - 1/5 of space (Group Members) -->
+        <RadzenColumn Size="2">
+            <h4>Group Members</h4>
+            <RadzenDataList Data="groupMembers" TItem="UserDTO">
+                <Template Context="user">
+                    <div>
+                        <span>@user.Name @user.Surname</span>
+                    </div>
+                </Template>
+            </RadzenDataList>
+        </RadzenColumn>
+
+        <!-- Second Column - 3/5 of space (Chat) -->
+        <RadzenColumn Size="6">
+            <h4>Details Section</h4>
+            <p>This section is currently empty. Add content here later.</p>
+        </RadzenColumn>
+
+        <!-- Third Column - 1/5 of space (Group Tasks) -->
+        <RadzenColumn Size="2">
+            <h4>Group Tasks</h4>
+            <RadzenDataList Data="groupTasks" TItem="TaskDTO">
+                <Template Context="task">
+                    <div>
+                        <span>@task.Title</span>
+                    </div>
+                </Template>
+            </RadzenDataList>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    [Parameter] public GroupDTO Group { get; set; }
+
+    private List<UserDTO> groupMembers = new();
+    private List<TaskDTO> groupTasks = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        if (Group != null)
+        {
+            groupMembers = await ApiServiceUser.GetResources($"/api/User/GetByGroup/{Group.Id}");
+            groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{Group.Id}");
+        }
+    }
+}
+

@@ -1,23 +1,228 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@using ClassLibrary.DTO
+@using OMPWebApp.Components.Pages
+@using OMPWebApp.Services
+@inject AuthorizationService AuthorizationService 
+@inject ApiConnectionService<CustomerDTO> CustomerService
+@inject DialogService DialogService
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+@rendermode InteractiveServer
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@if (AuthorizationService.isLogged)
+{
+    <MainPanel></MainPanel>
 
-<div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
-</div>
+}
+else
+{
+    <RadzenCard Style="width: 400px; margin: 50px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
+        @if (showLogin)
+        {
+            <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+                <RadzenIcon Icon="lock" Style="font-size: 36px; color: #0078D7;" />
+                <h2 style="margin: 10px 0;">Welcome</h2>
+                <p style="color: gray;">OMP</p>
+            </div>
+
+            <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@LoginMe" Style="padding: 20px; text-align: center;">
+                <RadzenFieldset Legend="Login Data">
+                    <RadzenText Style="margin-top: 15px; color: red"> @loginError </RadzenText>
+                    <RadzenText Style="margin-top: 15px; color: green"> @registerSuccess </RadzenText>
+                    <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" />
+                    <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" />
+                </RadzenFieldset>
+
+                <div style="text-align: center; margin-top: 20px;">
+                    <RadzenButton Text="Login" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <RadzenButton Text="Register" Click="() => ToggleView()" Style=" font-size: 14px;" />
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <RadzenButton Text="Login User 2 (manager)" Click="@(() => {loginData.Username  = "user2@gmail.com"; loginData.Password = "TrudneHaslo!23";})" Style=" font-size: 14px; background-color: coral;" />
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <RadzenButton Text="Login User 3 (user)" Click="@(() => {loginData.Username  = "user3@gmail.com"; loginData.Password="TrudneHaslo!23" ;})" Style=" font-size: 14px; background-color:coral;" />
+                </div>
+
+                
+            </RadzenTemplateForm>
+        }
+        else
+        {
+            <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+                <RadzenIcon Icon="lock" Style="font-size: 36px; color: #0078D7;" />
+                <h2 style="margin: 10px 0;">Register</h2>
+                <p style="color: gray;">OMP</p>
+            </div>
+
+            @if(!registerCustomerChoosen)
+            {
+
+                <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@RegisterMe" Style="padding: 20px; text-align: center;">
+
+                    <div style="display: flex; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                        <RadzenTextBox @bind-Value="customerPassword" Placeholder="Customer Universal Password" Style="flex: 1;" />
+                        <RadzenButton Text="Check" Click="() => CheckCUP()" Style="font-size: 14px; height: 40px;" />
+                    </div>
+
+
+                    <RadzenFieldset Legend="Register Data">
+                        <RadzenText Style="margin-top: 15px; color: red"> @registerError </RadzenText>
+                        <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" Disabled />
+                        <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" Disabled />
+                        <RadzenTextBox @bind-Value="loginData.Password2" Placeholder="confirm password" Type="password" Style="margin-bottom: 15px;" Disabled/>
+                    </RadzenFieldset>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <RadzenButton Text="Register" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+                    </div>
+
+                    <div style="text-align: center; margin-top: 10px;">
+                        <RadzenButton Text="Login" Click="() => ToggleView()" Style=" font-size: 14px;" />
+                    </div>
+                </RadzenTemplateForm>
+            }
+            else
+            {
+
+
+                <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@RegisterMe" Style="padding: 20px; text-align: center;">
+
+                    <div style="display: flex; align-items: center; margin-bottom: 15px; margin-top: 15px;">
+                        <RadzenText Style="flex: 1;">@customerName</RadzenText>
+                        <RadzenButton Text="Change CUP" Click="() => CancelCUP()" Style="background-color: darkcyan; font-size: 14px;" />
+                    </div>
+
+                    <RadzenFieldset Legend="Register Data">
+                        <RadzenText Style="margin-top: 15px; color: red"> @registerError </RadzenText>
+                        <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" />
+                        <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" />
+                        <RadzenTextBox @bind-Value="loginData.Password2" Placeholder="confirm password" Type="password" Style="margin-bottom: 15px;" />
+                    </RadzenFieldset>
+
+                    <div style="text-align: center; margin-top: 20px;">
+                        <RadzenButton Text="Register" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+                    </div>
+
+                    <div style="text-align: center; margin-top: 10px;">
+                        <RadzenButton Text="Login" Click="() => ToggleView()" Style=" font-size: 14px;" />
+                    </div>
+                </RadzenTemplateForm>
+            }
+        }
+    </RadzenCard>
+
+    @code {
+    private LoginObject loginData = new();
+    private bool showLogin = true;
+    private bool registerCustomerChoosen = false;
+    private string loginError = "";
+    private string registerError = "";
+    private string registerSuccess = "";
+    private string customerPassword = "";
+    private string customerName = "";
+
+    private void ToggleView()
+    {
+        showLogin = !showLogin;
+    }
+
+    private async Task LoginMe()
+    {
+        string loginResult = await AuthorizationService.Login(loginData.Username, loginData.Password);
+        loginData = new();
+        registerSuccess = " ";
+
+        if (loginResult != "OK")
+        {
+            loginError = loginResult;
+        }
+        else
+        {
+            
+        }
+
+    }
+
+    private async Task RegisterMe()
+    {
+        if(loginData.Password == loginData.Password2)
+        {
+            string registerResult = await AuthorizationService.Register(loginData.Username, loginData.Password);
+            if (registerResult != "OK")
+            {
+
+                registerError = registerResult;
+            }
+            else
+            {
+                await CustomerService.PostResource($"api/Customer/CreateUser/{customerPassword}", new CustomerDTO 
+                {
+                    Email = loginData.Username,
+                    Name = " ",
+                    Address = " ",
+                    Password = loginData.Password,
+                    PhoneContact = " ",
+                    Location = " "
+                });
+                ToggleView();
+                registerSuccess = "User Registered";
+            }
+        }
+        else
+        {
+            registerError = "Passwords must be the same";
+        }
+    }
+
+    private async Task CheckCUP()
+    {
+        if (customerPassword != "")
+        {
+            CustomerDTO customer = await CustomerService.GetResource($"api/Customer/GetByPassword/{customerPassword}");
+            if (customer != null && customer.Name != " ")
+            {
+                registerCustomerChoosen = true;
+                customerName = customer.Name;
+            }
+        }
+    }
+
+    private async Task CancelCUP()
+    {
+        registerCustomerChoosen = false;
+        customerPassword = "";
+        customerName = "";
+    }
+
+    public async Task NewProfileDialog()
+    {
+        await DialogService.OpenAsync<ProfileDialog>
+        (   
+            "Profile", 
+            new Dictionary<string, object>
+            {
+                { "User", AuthorizationService.userDTO }
+            }, 
+            new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px"
+            });
+    }
+
+    private class LoginObject
+    {
+        public string Username = "";
+        public string Password = "";
+        public string Password2 = "";
+    }
+}
+
+}
+

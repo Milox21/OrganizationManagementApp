@@ -1,0 +1,116 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject ApiConnectionService<PositionDTO> ApiServicePosition
+@inject ApiConnectionService<CountryDTO> ApiServiceCountry
+@inject AuthorizationService AuthService
+
+<RadzenSplitter Orientation="Orientation.Vertical">
+    <RadzenSplitterPane Size="50%">
+        <h3>Positions</h3>
+        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+            <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+                <Columns>
+
+                    <RadzenDataGridColumn TItem="PositionDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="PositionDTO" Property="Description" Title="Description" />
+                    <RadzenDataGridColumn TItem="PositionDTO" Title="Delete">
+                        <Template Context="data">
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeletePosition(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
+                <RadzenTextBox Placeholder="Name" @bind-Value="@newPositionName" />
+                <RadzenTextBox Placeholder="Description" @bind-Value="@newPositionDescription" />
+                <RadzenButton Text="Add Position" Click="AddPosition" />
+            </div>
+        </div>
+    </RadzenSplitterPane>
+    <RadzenSplitterPane Size="50%">
+        <h3>Countries</h3>
+        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+            <RadzenDataGrid TItem="CountryDTO" Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+                <Columns>
+                    <RadzenDataGridColumn TItem="CountryDTO" Property="Id" Title="Id" />
+                    <RadzenDataGridColumn TItem="CountryDTO" Property="Name" Title="Name" />
+                    <RadzenDataGridColumn TItem="CountryDTO" Title="Delete">
+                        <Template Context="data">
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeleteCountry(data))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
+                <RadzenTextBox Placeholder="Name" @bind-Value="@newCountryName" />
+                <RadzenTextBox Placeholder="Description" @bind-Value="@newCountryDescription" />
+                <RadzenButton Text="Add Country" Click="AddCountry" />
+            </div>
+        </div>
+    </RadzenSplitterPane>
+</RadzenSplitter>
+
+@code
+{
+    private List<PositionDTO> positions = new();
+    private List<CountryDTO> countries = new();
+
+    private string newPositionName;
+    private string newCountryName;
+
+    private string newPositionDescription;
+    private string newCountryDescription;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+
+    }
+    private async Task LoadData()
+    {
+        positions = await ApiServicePosition.GetResources($"/api/Position/GetByCustomer/{AuthService.userDTO.CustomerId}");
+        countries = await ApiServiceCountry.GetResources($"/api/Country/{AuthService.userDTO.CustomerId}");
+    }
+
+    private async Task AddPosition()
+    {
+        PositionDTO position = new()
+        {
+                Name = newPositionName,
+                Description = newPositionDescription,
+                CustomerId = AuthService.userDTO.CustomerId
+        };
+
+        await ApiServicePosition.PostResource($"/api/Position", position);
+        await LoadData();
+    }
+
+    private async Task DeletePosition(PositionDTO position)
+    {
+        position.IsDeleted = true;
+        position.EditDate = DateTime.Now;
+        position.DeleteDate = DateTime.Now;
+
+        await ApiServicePosition.PutResource($"/api/Position/{position.Id}", position);
+        await LoadData();
+    }
+
+    //TO DO
+    /*
+     * in Financial Module, add stuff so the manager can create:
+     * 1. Invoice Tax Rates
+     * 2. Payroll Tax Rates
+     */
+    private async Task AddCountry()
+    {
+       
+    }
+
+    private async Task DeleteCountry(CountryDTO country)
+    {
+
+    }
+}

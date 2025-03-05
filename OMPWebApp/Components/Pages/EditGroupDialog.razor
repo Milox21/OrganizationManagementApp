@@ -1,0 +1,32 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject ApiConnectionService<GroupDTO> ApiServiceGroup
+
+<RadzenTemplateForm TItem="GroupDTO" Data="@group" Submit="@Save" Style="padding: 20px;">
+    <RadzenFieldset Legend="Edit Group Details">
+        <RadzenLabel Text="Name" />
+        <RadzenTextBox @bind-Value="group.Title" Placeholder="Enter customer name" Style="width: 100%;" />
+
+        <RadzenLabel Text="Surname" Style="margin-top: 10px;" />
+        <RadzenTextBox @bind-Value="group.Description" Placeholder="Enter Surname" Style="width: 100%;" />
+    </RadzenFieldset>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-right: 10px; background-color: #0078D7; color: white;" />
+        <RadzenButton Text="Cancel" Click="@((args) => DialogService.Close(false))" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public GroupDTO group { get; set; }
+
+    private async Task Save()
+    {
+        group.EditDate = DateTime.Now;
+        await ApiServiceGroup.PutResource($"/api/Group/{group.Id}", group);
+
+        DialogService.Close(true);
+    }
+}

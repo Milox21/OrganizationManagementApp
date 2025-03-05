@@ -1,0 +1,37 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject ApiConnectionService<UserDTO> ApiServiceCustomer
+
+<RadzenTemplateForm TItem="UserDTO" Data="@user" Submit="@SaveCustomer" Style="padding: 20px;">
+    <RadzenFieldset Legend="Edit Customer Details">
+        <RadzenLabel Text="Name" />
+        <RadzenTextBox @bind-Value="user.Name" Placeholder="Enter customer name" Style="width: 100%;" />
+
+        <RadzenLabel Text="Surname" Style="margin-top: 10px;" />
+        <RadzenTextBox @bind-Value="user.Surname" Placeholder="Enter Surname" Style="width: 100%;" />
+
+        <RadzenLabel Text="Select Value" Component="DropDownVirtualization" />
+        <RadzenDropDown AllowClear="true" @bind-Value="user.PositionId" AllowVirtualization="true" Name="DropDownVirtualization"
+                        AllowFiltering="true" Data=@positions TextProperty="@nameof(PositionDTO.Name)" ValueProperty="@nameof(PositionDTO.Id)" Style="width: 100%;" />
+    </RadzenFieldset>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-right: 10px; background-color: #0078D7; color: white;" />
+        <RadzenButton Text="Cancel" Click="@((args) => DialogService.Close(false))" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public UserDTO user { get; set; }
+    [Parameter] public IEnumerable<PositionDTO> positions { get; set; }
+
+    private async Task SaveCustomer()
+    {
+        user.EditDate = DateTime.Now;
+        await ApiServiceCustomer.PutResource($"/api/User/{user.Id}", user);
+
+        DialogService.Close(true);
+    }
+}

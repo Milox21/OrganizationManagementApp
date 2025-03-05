@@ -24,7 +24,6 @@ builder.Services.AddIdentityCore<IdentityUser>()
  .AddEntityFrameworkStores<DatabaseContext>()
  .AddApiEndpoints();
 
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

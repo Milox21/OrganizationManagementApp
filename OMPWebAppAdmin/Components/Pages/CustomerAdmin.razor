@@ -9,9 +9,9 @@
     <RadzenButton Text="Add Customer" ButtonStyle="ButtonStyle.Secondary" Click=@NewCustomerDialog />
 </div>
 
-<RadzenDataGrid Data="@Customers" TItem="CustomerDTO" AllowVirtualization="true" Style="height:400px"
+<RadzenDataGrid Data="@Customers" TItem="CustomerDTO" AllowVirtualization="true" Style="height:800px"
 AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
-AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdateRow">
+AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single">
     <Columns>
         <RadzenDataGridColumn TItem="CustomerDTO" Property="Name" Title="Name" Width="200px">
             <EditTemplate Context="customer">
@@ -19,13 +19,44 @@ AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdat
             </EditTemplate>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="CustomerDTO" Property="CreationDate" Title="Creation Date" Width="200px">
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="Address" Title="Address" Width="250px">
+            <EditTemplate Context="customer">
+                <RadzenTextBox @bind-Value="customer.Address" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="Email" Title="Email" Width="200px">
+            <EditTemplate Context="customer">
+                <RadzenTextBox @bind-Value="customer.Email" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="Location" Title="Location" Width="200px">
+            <EditTemplate Context="customer">
+                <RadzenTextBox @bind-Value="customer.Location" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="PhoneContact" Title="PhoneContact" Width="150px">
+            <EditTemplate Context="customer">
+                <RadzenTextBox @bind-Value="customer.PhoneContact" Style="width: 100%;" />
+            </EditTemplate>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Property="CreationDate" Title="Creation Date" Width="150px">
             <EditTemplate Context="customer">
                 <RadzenDatePicker @bind-Value="customer.CreationDate" Style="width: 100%;" />
             </EditTemplate>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="CustomerDTO" Title="Actions" Width="100px">
+        <RadzenDataGridColumn TItem="CustomerDTO" Title="Edit" Width="100px">
+            <Template Context="customer">
+                <RadzenButton Text="Edit" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Primary"
+                Click="@(async () => await EditCustomerDialog(customer))" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="CustomerDTO" Title="Delete" Width="120px">
             <Template Context="customer">
                 <RadzenButton Text="Delete" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Danger"
                 Click="@(async () => await DeleteCustomer(customer))" />
@@ -40,6 +71,11 @@ AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdat
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
         Customers = await ApiServiceCustomer.GetResources("/api/Customer");
     }
 
@@ -50,15 +86,22 @@ AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdat
                 Width = "700px",
                 Height = "512px" 
             });
+        await LoadData();
     }
 
-    private async Task OnUpdateRow(CustomerDTO customer)
+    private async Task EditCustomerDialog(CustomerDTO customer)
     {
-        if (customer == null)
+        await DialogService.OpenAsync<EditCustomerDialog>("Edit Customer", 
+        new Dictionary<string, object>()
         {
-            return;
-        }
-        await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
+            {"customer", customer }
+        },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px"
+            });
+        await LoadData();
     }
 
     private async Task DeleteCustomer(CustomerDTO customer)
@@ -69,12 +112,11 @@ AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdat
         }
 
         customer.IsDeleted = true;
-        customer.Password = "";
         customer.Modules = new List<ModuleDTO>(); 
 
         await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
 
         Customers.Remove(customer);
-        StateHasChanged();
+        await LoadData();
     }
 }

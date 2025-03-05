@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Identity.Client;
 using OMP_API.Models.Contexts;
-using OMP_API.Models.ModelInterfaces;
+using ClassLibrary.Models.ModelInterfaces;
 
 namespace OMP_API.Controllers
 {

@@ -1,0 +1,54 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+
+<RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
+    <RadzenStack>
+        <RadzenRow>
+            <RadzenColumn Size="12" SizeMD="6" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border)">
+                <RadzenText TextStyle="TextStyle.Subtitle1">User Information</RadzenText>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                    <RadzenStack Gap="0" class="rz-text-truncate">
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-2 rz-my-0" Style="color: var(--rz-text-tertiary-color);">Full Name</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@(User?.Name + " " + User?.Surname)</b></RadzenText>
+                        <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-4 rz-mb-0" Style="color: var(--rz-text-tertiary-color);">Email</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.Email</b></RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border)">
+                <RadzenText TextStyle="TextStyle.Subtitle1">Profile Details</RadzenText>
+                <RadzenStack Gap="0" class="rz-text-truncate">
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-2 rz-my-0" Style="color: var(--rz-text-tertiary-color);">Company</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.CompanyName</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-4 rz-mb-0" Style="color: var(--rz-text-tertiary-color);">Position</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.Position?.Name</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-4 rz-mb-0" Style="color: var(--rz-text-tertiary-color);">Country</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.Country?.Name</b></RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenStack>
+    <RadzenStack Visible="true" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        <RadzenButton Click="@OnClose" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
+        <RadzenButton Click="@OnEdit" Variant="Variant.Flat" Text="Edit" Style="width: 120px" />
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public UserDTO? User { get; set; } = new();
+
+    private async Task OnEdit()
+    {
+        // Navigate to the edit page or open another dialog for editing
+        DialogService.Close("edit");
+    }
+
+    private void OnClose()
+    {
+        DialogService.Close();
+    }
+
+}

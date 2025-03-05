@@ -1,0 +1,110 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<UserDTO> ApiServiceUser
+@inject ApiConnectionService<GroupDTO> ASGroup
+
+<div class="rz-p-4 rz-text-align-left">
+    <RadzenButton Text="Add Group" ButtonStyle="ButtonStyle.Secondary" Click=@NewGroupDialog />
+</div>
+
+<RadzenDataGrid TItem="GroupDTO" Data="@Groups" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+    <Columns>
+
+        <RadzenDataGridColumn TItem="GroupDTO" Property="Title" Title="Title"/>
+        <RadzenDataGridColumn TItem="GroupDTO" Property="Description" Title="Description"/>
+        <RadzenDataGridColumn TItem="GroupDTO" Title="Edit" Width="100px">
+            <Template Context="group">
+                <RadzenButton Text="Edit" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Primary"
+                              Click="@(async () => await EditGroupDialog(group))" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="GroupDTO" Title="Manage" Width="120px">
+            <Template Context="group">
+                <RadzenButton Text="Manage" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Base"
+                              Click="@(async () => await ManageGroup(group))" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="GroupDTO" Title="Delete" Width="120px">
+            <Template Context="group">
+                <RadzenButton Text="Delete" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Danger"
+                              Click="@(async () => await DeleteUser(group))" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    List<GroupDTO>? Groups = new();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        Groups = await ASGroup.GetResources($"/api/Group/GetByCustomer/{AuthService.userDTO.CustomerId}");
+    }
+
+    public async Task NewGroupDialog()
+    {
+        await DialogService.OpenAsync<AddGroupDialog>("Add Group", new Dictionary<string, object>(), new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px"
+            });
+        await LoadData();
+    }
+
+    private async Task EditGroupDialog(GroupDTO group)
+    {
+        await DialogService.OpenAsync<EditGroupDialog>("Edit Group",
+        new Dictionary<string, object>()
+                    {
+            {"group", group },
+                    },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px"
+            });
+        await LoadData();
+    }
+
+    private async Task ManageGroup(GroupDTO group)
+    {
+        await DialogService.OpenAsync<ManageGroupDialog>("Manage Group",
+        new Dictionary<string, object>()
+                        {
+            {"group", group },
+                        },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "512px"
+            });
+        await LoadData();
+    }
+
+    private async Task DeleteUser(GroupDTO group)
+    {
+        if (group == null)
+        {
+            return;
+        }
+
+        group.IsDeleted = true;
+        group.DeleteDate = DateTime.Now;
+        await ASGroup.PutResource($"/api/Group/{group.Id}", group);
+
+        Groups.Remove(group);
+        await LoadData();
+    }
+}

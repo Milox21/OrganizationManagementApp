@@ -14,6 +14,19 @@ namespace OMP_API.DTO
         public string Name { get; set; } = null!;
         [JsonPropertyName("password")]
         public string Password { get; set; } = null!;
+
+        [JsonPropertyName("email")]
+        public string Email { get; set; } = null!; 
+
+        [JsonPropertyName("phone_contact")]
+        public string PhoneContact { get; set; } = null!; 
+
+        [JsonPropertyName("address")]
+        public string Address { get; set; } = null!; 
+
+        [JsonPropertyName("location")]
+        public string Location { get; set; } = null!;
+
         [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
         [JsonPropertyName("editDate")]

@@ -4,15 +4,13 @@
 @inject DialogService DialogService
 @inject ApiConnectionService<CustomerDTO> ApiServiceCustomer
 
-
 <RadzenTemplateForm TItem="CustomerDTO" Data="@customer" Submit="@SaveCustomer" Style="padding: 20px;">
-    <RadzenFieldset Legend="Customer Details">
+    <RadzenFieldset Legend="Edit Customer Details">
         <RadzenLabel Text="Name" />
         <RadzenTextBox @bind-Value="customer.Name" Placeholder="Enter customer name" Style="width: 100%;" />
 
-        <!-- Customer Creation Date -->
         <RadzenLabel Text="Company Universal Password" Style="margin-top: 10px;" />
-        <RadzenTextBox @bind-Value="customer.Password" Placeholder="Enter CUP"  Style="width: 100%;" />
+        <RadzenTextBox @bind-Value="customer.Password" Placeholder="Enter CUP" Style="width: 100%;" />
 
         <RadzenLabel Text="Address" Style="margin-top: 10px;" />
         <RadzenTextBox @bind-Value="customer.Address" Placeholder="Enter Address" Style="width: 100%;" />
@@ -24,28 +22,23 @@
         <RadzenTextBox @bind-Value="customer.Location" Placeholder="Enter Location" Style="width: 100%;" />
 
         <RadzenLabel Text="Phone Contact" Style="margin-top: 10px;" />
-        <RadzenTextBox @bind-Value="customer.PhoneContact" Placeholder="Enter PhoneContact" Style="width: 100%;" />
+        <RadzenTextBox @bind-Value="customer.PhoneContact" Placeholder="Enter Phone Contact" Style="width: 100%;" />
     </RadzenFieldset>
 
-    <!-- Submit and Cancel Buttons -->
     <div style="text-align: center; margin-top: 20px;">
         <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-right: 10px; background-color: #0078D7; color: white;" />
         <RadzenButton Text="Cancel" Click="@((args) => DialogService.Close(false))" ButtonStyle="ButtonStyle.Secondary" />
     </div>
 </RadzenTemplateForm>
 
-
 @code {
-    private CustomerDTO customer = new CustomerDTO();
+    [Parameter] public CustomerDTO customer { get; set; } 
 
     private async Task SaveCustomer()
     {
-        customer.IsDeleted = false;
-        customer.CreationDate = DateTime.Now;
+        customer.EditDate = DateTime.Now;
+        await ApiServiceCustomer.PutResource($"/api/Customer/{customer.Id}", customer);
 
-        //TODO api connection 
-        await ApiServiceCustomer.PostResource("/api/Customer/", customer);
-
-        DialogService.Close(false);
+        DialogService.Close(true);
     }
 }
