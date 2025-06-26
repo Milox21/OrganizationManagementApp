@@ -1,7 +1,152 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
 
-<h1>Hello, world!</h1>
+@inject DialogService DialogService
+@inject ApiConnectionService<TaskDTO> ApiTaskService
+@inject AuthorizationService AuthService
 
-Welcome to your new app.
+<RadzenScheduler @ref=@scheduler 
+SlotRender=@OnSlotRender 
+AppointmentRender=@OnAppointmentRender 
+AppointmentSelect=@OnAppointmentSelect 
+style="height: 730px;" 
+TItem="Appointment" 
+Data=@appointments 
+StartProperty="Start" 
+EndProperty="End" 
+ShowHeader=True
+TextProperty="Text" 
+SelectedIndex="2">
+    <RadzenDayView />
+    <RadzenWeekView />
+    <RadzenMonthView />
+</RadzenScheduler>
+
+@code {
+    RadzenScheduler<Appointment> scheduler;
+    IList<Appointment> appointments; 
+
+    protected override async Task OnInitializedAsync()
+    {
+        appointments = new List<Appointment>();
+        await LoadData();
+
+        if (scheduler != null)
+        {
+            await scheduler.Reload();
+        }
+    }
+
+    async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<Appointment> args)
+    {
+        Appointment copy = new Appointment
+            {
+                Start = args.Data.Start,
+                End = args.Data.End,
+                Text = args.Data.Text,
+                Parent_Id = args.Data.Parent_Id,
+                Parent_Type = args.Data.Parent_Type
+            };
+
+        if(copy.Parent_Type == "Task" || copy.Parent_Type == "Meeting")
+        {
+            SeeDetails_Task(copy);
+        }
+
+        await scheduler.Reload();
+    }
+
+    private async void SeeDetails_Task(Appointment apo)
+    {
+
+        List<TaskDTO> tasks = await ApiTaskService.GetResources($"/api/Task/GetByUser/{AuthService.userDTO.Id}");
+        var task = tasks.FirstOrDefault(item => item.Id == apo.Parent_Id);
+        var result = await DialogService.OpenAsync<TaskDialog>("Task",
+        new Dictionary<string, object>()
+                            {
+            {"task", task }
+                            },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "600px"
+            });
+    }
+
+    private async Task LoadData()
+    {
+        List<TaskDTO> tasks = await ApiTaskService.GetResources($"/api/Task/GetByUser/{AuthService.userDTO.Id}");
+        foreach(var item in tasks)
+        {
+            appointments.Add(new Appointment
+            {
+                Parent_Type = item.IsMeeting? "Meeting" : "Task",
+                Parent_Id = item.Id, 
+                Start = item.DeadlineTime,
+                End = item.DeadlineTime,
+                CompletionTime = item.CompletionTime,
+                Text = item.IsMeeting ? "Meeting: " + item.Title : "Deadline: " + item.Title
+            });
+        }
+    }
+
+    void OnSlotRender(SchedulerSlotRenderEventArgs args)
+    {
+
+        if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+        {
+            args.Attributes["style"] = "background: rgb(233, 235, 251)";
+        }
+
+        DateTime currentViewMonth = args.View.StartDate.AddDays(15); 
+
+        if (args.View.Text == "Month" && args.Start.Month != currentViewMonth.Month)
+        {
+            args.Attributes["style"] = "background: rgb(218, 223, 225);";
+        }
+
+    }
+
+    void OnAppointmentRender(SchedulerAppointmentRenderEventArgs<Appointment> args)
+    {
+        // Never call StateHasChanged in AppointmentRender - would lead to infinite loop
+        if (args.Data.Parent_Type == "Task")
+        {
+            if (args.Data.CompletionTime == null && args.Data.End > DateTime.Now)
+            {
+                args.Attributes["style"] = "background: orange";
+            }
+
+            if (args.Data.CompletionTime == null && args.Data.End < DateTime.Now)
+            {
+                args.Attributes["style"] = "background: red";
+            }
+
+            if (args.Data.CompletionTime != null)
+            {
+                args.Attributes["style"] = "background: green";
+            }
+        } 
+
+        if (args.Data.Parent_Type == "Meeting")
+        {
+            args.Attributes["style"] = "background: darkblue";
+        }
+    }
+
+    public class Appointment
+    {
+        public DateTime Start { get; set; }
+        public DateTime End { get; set; }
+       
+        public string Parent_Type { get; set; }
+        public int Parent_Id { get; set; }
+
+        public DateTime? CompletionTime { get; set; }
+        public string Text { get; set; }
+    }
+}
+
+ 

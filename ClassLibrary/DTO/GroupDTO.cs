@@ -35,6 +35,9 @@ namespace ClassLibrary.DTO
         [JsonPropertyName("groups_users")]
         public virtual ICollection<GroupsUserDTO>? GroupsUsers { get; set; } = new List<GroupsUserDTO>();
 
+        [JsonPropertyName("users")]
+        public virtual ICollection<UserDTO>? Users { get; set; } = new List<UserDTO>();
+
         [JsonPropertyName("tasks")]
         public virtual ICollection<TaskDTO>? Tasks { get; set; } = new List<TaskDTO>();
     }

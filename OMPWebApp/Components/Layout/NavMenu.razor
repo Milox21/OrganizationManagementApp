@@ -1,30 +1,305 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">OMPWebApp</a>
-    </div>
-</div>
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Components.Pages
+@using OMPWebApp.Services
+@using Radzen.Blazor.Rendering
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@inject AuthorizationService AuthorizationService
+@inject ApiConnectionService<GroupDTO> ApiGroupService
+@inject ApiConnectionService<SpecialGroupDTO> ApiSpecialGroupService
+@inject ApiConnectionService<NotificationDTO> ApiNotificationService
+@inject ApiConnectionService<ModuleDTO> ApiModuleService
+@inject DialogService DialogService
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
+<RadzenHeader>
+    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Style="width: 100%;">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0">
+            <RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+            <RadzenLabel Text="OMP" Style="margin-right: 10px" />
+        </RadzenStack>
+
+        <RadzenLabel Text="@AuthorizationService.userDTO.CompanyName" />
+        <RadzenLabel Text="@AuthorizationService.userDTO.Role" />
+        <div class="rz-text-align-center" style="margin-left: auto; margin-right: 1rem;">
+            <RadzenProfileMenu @ref=button Click="@ProfileMenuClick">
+                <Template>
+                    <RadzenText Style="color:white; margin-top:10px">@AuthorizationService.userDTO.Name @AuthorizationService.userDTO.Surname</RadzenText>
+                </Template>
+                <ChildContent>
+                    <RadzenProfileMenuItem Text="Profile" Icon="account_circle"></RadzenProfileMenuItem>
+                    <RadzenProfileMenuItem Text="Notifications" Icon="assignment_late"></RadzenProfileMenuItem>
+                    <RadzenProfileMenuItem Text="Logout" Icon="line_weight"></RadzenProfileMenuItem>
+                </ChildContent>
+            </RadzenProfileMenu>
         </div>
+    </RadzenStack>
+</RadzenHeader>
+<RadzenSidebar Responsive="false" Style="width: max-content">
+    <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+        <div onclick="document.querySelector('.navbar-toggler').click()">
+
+            <NavLink style="text-decoration: none; color:black;" href="" Match="NavLinkMatch.All">
+                <RadzenPanelMenuItem Text="Home" Icon="home" />
             </NavLink>
-        </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div>
+            @if (AuthorizationService.userDTO.Role == "Manager")
+            {
 
+                <RadzenPanelMenuItem Text="Manager Panel" Icon="auto_awesome">
+                    <NavLink style="text-decoration: none;" href="useradmin" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="Company Users" Icon="pageview" />
+                    </NavLink>
+
+                    <NavLink style="text-decoration: none;" href="groups" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="Company Groups" Icon="pageview" />
+                    </NavLink>
+
+                    <NavLink style="text-decoration: none;" href="special_groups" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="Company Special Groups" Icon="pageview" />
+                    </NavLink>
+
+                    <NavLink style="text-decoration: none;" href="constants" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="Company Constants" Icon="pageview" />
+                    </NavLink>
+
+                </RadzenPanelMenuItem>
+
+            }
+
+            <RadzenPanelMenuItem Text="Groups" Icon="dashboard" Click="@LoadData">
+                @foreach (GroupDTO group in groups)
+                {
+                    <NavLink style="text-decoration: none;" href="@($"group/{group.Id}")" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark" />
+                    </NavLink>
+                }
+            </RadzenPanelMenuItem>
+
+            <RadzenPanelMenuItem Text="Special Groups" Icon="dashboard" Click="@LoadData">
+                @foreach (SpecialGroupDTO group in specialgroups)
+                {
+                    <NavLink style="text-decoration: none;" href="@($"specialgroup/{group.Id}")" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark" />
+                    </NavLink>
+                }
+            </RadzenPanelMenuItem>
+
+            @if (modules.Any(m => m.Id == 1))
+            {
+                <RadzenPanelMenuItem Text="@modules.Where(m => m.Id == 1).FirstOrDefault().Name" Icon="dashboard" >
+                    <RadzenPanelMenuItem Text="Financial Constants" Icon="dashboard">
+                        <NavLink style="text-decoration: none;" href="fm_tax_rates" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Tax Rates" Icon="pageview" />
+                        </NavLink>
+
+                        <NavLink style="text-decoration: none;" href="fm_contracts" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Contract types" Icon="pageview" />
+                        </NavLink>
+
+                        <NavLink style="text-decoration: none;" href="fm_currencies" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Currencies" Icon="pageview" />
+                        </NavLink>
+                    </RadzenPanelMenuItem>
+
+                    <RadzenPanelMenuItem Text="Invoices & Payroll" Icon="dashboard">
+                        <NavLink style="text-decoration: none;" href="fm_invoiceincome" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Income Invoice" Icon="pageview" />
+                        </NavLink>
+                    </RadzenPanelMenuItem>
+                </RadzenPanelMenuItem>
+            }
+        </div>
+    </RadzenPanelMenu>
+</RadzenSidebar>
+
+<Popup @ref=popup Lazy="true" class="my-popup">
+    <RadzenStack Orientation="Orientation.Vertical" Gap="0" class="rz-h-100">
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Class=" p-3" Style="color: white; background-color:cornflowerblue;">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0" Style="color: white;">Notifications</RadzenText>
+        </RadzenStack>
+
+        @if (notifications != null && notifications.Count == 0)
+        {
+            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 200px;">
+                <RadzenIcon Icon="notifications_off" Style="font-size: 48px; color: var(--rz-secondary-lighter);" />
+                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-secondary-light);">No notifications</RadzenText>
+            </RadzenStack>
+        }
+        else @if (notifications != null)
+        {
+            <RadzenDataList AllowVirtualization="true" Data="@notifications"
+            Style="flex: 1; --rz-datalist-padding: 0; --rz-datalist-item-margin-inline: 0; overflow: auto; max-height: 400px;">
+                <Template Context="notification">
+                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="height: 75px; ">
+                        <RadzenStack Gap="0.1rem" Style="flex: 1;">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="announcement" />
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="@(notification.IsSeen ? "" : "notification-title-unread")">
+                                    @notification.NotificationSource
+                                </RadzenText>
+                            </RadzenStack>
+                            <RadzenText TextStyle="TextStyle.Body1">@notification.NotificationText</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                @notification.CreationDate.ToString("MMM dd, yyyy HH:mm")
+                            </RadzenText>
+                        </RadzenStack>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0">
+                            @if (!notification.IsSeen)
+                            {
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="visibility" Click="@(() => MarkAsRead(notification))"
+                                Style="padding: 0; width: 32px; height: 32px;" />
+                            }
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Click="@(() => DeleteNotification(notification))"
+                            Style="padding: 0; width: 32px; height: 32px;" />
+                        </RadzenStack>
+                    </RadzenStack>
+
+                </Template>
+            </RadzenDataList>
+        }
+        else
+        {
+            <div class="p-3">
+                <RadzenText TextStyle="TextStyle.Body1">Loading notifications...</RadzenText>
+            </div>
+        }
+    </RadzenStack>
+</Popup>
+
+<style>
+    .notification-title-unread {
+    font-weight: bold;
+    }
+
+    .my-popup {
+    display: none;
+    position: absolute;
+    overflow: hidden;
+    height: 300px;
+    width: 400px;
+    border: var(--rz-panel-border);
+    background-color: var(--rz-panel-background-color);
+    box-shadow: var(--rz-panel-shadow);
+    border-radius: var(--rz-border-radius)
+    }
+
+    .my-popup .rz-datalist {
+    scrollbar-width: thin;
+    scrollbar-color: var(--rz-secondary-lighter) transparent;
+    }
+
+    .my-popup .rz-datalist::-webkit-scrollbar {
+    width: 6px;
+    }
+
+    .my-popup .rz-datalist::-webkit-scrollbar-thumb {
+    background-color: var(--rz-secondary-lighter);
+    border-radius: 3px;
+    }
+
+    .my-popup .rz-datalist::-webkit-scrollbar-track {
+    background: transparent;
+    }
+
+    .notification-title-unread {
+    font-weight: bold;
+    }
+</style>
+@code {
+    bool sidebarExpanded = true;
+    List<GroupDTO> groups = new();
+    List<SpecialGroupDTO> specialgroups = new();
+    List<ModuleDTO> modules = new();
+
+    private RadzenProfileMenu button;
+    private Popup popup;
+    private bool showNotifications;
+    private List<NotificationDTO> notifications = new();
+    private int unreadCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        notifications = new();
+        showNotifications = false;
+        await LoadData();
+        await LoadNotifications();
+    }
+
+    private async Task LoadData()
+    {
+        groups = await ApiGroupService.GetResources($"/api/Group/GetByUser/{AuthorizationService.userDTO.Id}");
+        specialgroups = await ApiSpecialGroupService.GetResources($"/api/SpecialGroup/GetByCustomer/{AuthorizationService.userDTO.CustomerId}");
+        modules = await ApiModuleService.GetResources($"/api/Module/GetByCustomer/{AuthorizationService.userDTO.CustomerId}");
+
+    }
+
+    public async Task NewProfileDialog()
+    {
+        await DialogService.OpenAsync<ProfileDialog>
+        (
+            "Profile",
+            new Dictionary<string, object>
+                        {
+                { "User", AuthorizationService.userDTO }
+                        },
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "512px"
+                });
+    }
+
+
+    public async Task ProfileMenuClick(RadzenProfileMenuItem item)
+    {
+        switch (item.Text)
+        {
+            case "Profile":
+                await NewProfileDialog();
+                break;
+            case "Logout":
+                await AuthorizationService.Logoff();
+                break;
+            case "Notifications":
+                await popup.ToggleAsync(button.Element);
+                break;
+        }
+    }
+
+    
+    private async Task LoadNotifications()
+    {
+        try
+        {
+            notifications = await ApiNotificationService.GetResources($"/api/Notification/GetByUser/{AuthorizationService.userDTO.Id}");
+            // Sort notifications with unread first, then by creation date (newest first)
+            notifications = notifications
+                .Where(n => !n.IsDeleted)
+                .OrderByDescending(n => !n.IsSeen)
+                .ThenByDescending(n => n.CreationDate)
+                .ToList();
+                
+            unreadCount = notifications.Count(n => !n.IsSeen);
+        }
+        catch (Exception ex)
+        {
+            // Handle exception
+            Console.WriteLine($"Error loading notifications: {ex.Message}");
+        }
+    }
+
+    private async Task MarkAsRead(NotificationDTO notification)
+    {
+        notification.IsSeen = true;
+        await ApiNotificationService.PutResource($"/api/Notification/{notification.Id}", notification);
+        await LoadNotifications();
+    }
+
+    private async Task DeleteNotification(NotificationDTO notification)
+    {
+        notification.IsDeleted = true;
+        notification.DeleteDate = DateTime.Now;
+        await ApiNotificationService.PutResource($"/api/Notification/{notification.Id}", notification);
+        await LoadNotifications();
+    }
+}

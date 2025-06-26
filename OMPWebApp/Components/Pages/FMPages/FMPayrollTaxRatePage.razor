@@ -1,0 +1,195 @@
+﻿@page "/fm_tax_rates"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<PayrollTaxRateDTO> PayrollTaxService
+@inject ApiConnectionService<InvoiceTaxRateDTO> InvoiceTaxService
+@inject DialogService DialogService
+
+<style>
+    .taxes-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    }
+
+    .taxes-header-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    }
+</style>
+
+<RadzenCard Style="height: 600px; overflow-y: auto;">
+    <RadzenRow>
+        <!-- Payroll Taxes -->
+        <RadzenColumn Size="6">
+            <div class="taxes-header-row">
+                <div class="taxes-header-title">Payroll Taxes</div>
+                <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@AddPayrollTax" />
+            </div>
+
+            <RadzenDataGrid Data="@payrollTaxes" TItem="PayrollTaxRateDTO"
+                            AllowPaging="true"
+                            PageSize="10"
+                            ShowPagingSummary="true"
+                            AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Property="Title" Title="Title" />
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Property="Description" Title="Description" />
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Property="Rate" Title="Rate (%)" />
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Property="Country" Title="Country" />
+
+                    <!-- Edit Button Column -->
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Title="Edit" Width="50px">
+                        <Template Context="pt">
+                            <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                          Click="@(args => EditPayrollTax(pt))"
+                                          Style="margin-right: 0.5rem;" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <!-- Delete Button Column -->
+                    <RadzenDataGridColumn TItem="PayrollTaxRateDTO" Title="Delete" Width="50px">
+                        <Template Context="pt">
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Click="@(args => DeletePayrollTax(pt))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenColumn>
+
+        <!-- Invoice Taxes -->
+        <RadzenColumn Size="6">
+            <div class="taxes-header-row">
+                <div class="taxes-header-title">Invoice Taxes</div>
+                <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@AddInvoiceTax" />
+            </div>
+
+            <RadzenDataGrid Data="@invoiceTaxes" TItem="InvoiceTaxRateDTO"
+                            AllowPaging="true"
+                            PageSize="10"
+                            ShowPagingSummary="true"
+                            AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Property="Title" Title="Title" />
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Property="Type" Title="Description" />
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Property="Rate" Title="Rate (%)" />
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Property="Country" Title="Country" />
+
+                    <!-- Edit Button Column -->
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Title="Edit" Width="50px">
+                        <Template Context="it">
+                            <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                          Click="@(args => EditInvoiceTax(it))"
+                                          Style="margin-right: 0.5rem;" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <!-- Delete Button Column -->
+                    <RadzenDataGridColumn TItem="InvoiceTaxRateDTO" Title="Delete" Width="50px">
+                        <Template Context="it">
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Click="@(args => DeleteInvoiceTax(it))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    private List<PayrollTaxRateDTO>? payrollTaxes;
+    private List<InvoiceTaxRateDTO>? invoiceTaxes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        payrollTaxes = await PayrollTaxService.GetResources($"/api/Tax/GetPayrollTaxRates/{AuthService.userDTO.CustomerId}");
+        invoiceTaxes = await InvoiceTaxService.GetResources($"/api/Tax/GetInvoiceTaxRates/{AuthService.userDTO.CustomerId}");
+    }
+    private async void AddPayrollTax()
+    {
+        await DialogService.OpenAsync<AddTaxDialog>("New Payroll Tax",
+        new Dictionary<string, object>()
+                        {
+            {"type", "payroll" },
+                        },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "300px"
+            });
+        await LoadData();
+    }
+
+    private async void AddInvoiceTax()
+    {
+        await DialogService.OpenAsync<AddTaxDialog>("New Invoice Tax",
+        new Dictionary<string, object>()
+                            {
+            {"type", "invoice" },
+                            },
+        new DialogOptions()
+            {
+                Width = "700px",
+                Height = "300px"
+            });
+    }
+
+    private async void EditPayrollTax(PayrollTaxRateDTO tax)
+    {
+        await DialogService.OpenAsync<AddTaxDialog>("Edit Payroll Tax",
+            new Dictionary<string, object>()
+                {
+            { "type", "payroll" },
+            { "payrollTax", tax } // Key name must match the parameter in the dialog
+                },
+            new DialogOptions() { Width = "700px", Height = "300px" });
+
+        await LoadData();
+    }
+
+    private async void EditInvoiceTax(InvoiceTaxRateDTO tax)
+    {
+        await DialogService.OpenAsync<AddTaxDialog>("Edit Invoice Tax",
+            new Dictionary<string, object>()
+                {
+            { "type", "invoice" },
+            { "invoiceTax", tax } // Key name must match the parameter in the dialog
+                },
+            new DialogOptions() { Width = "700px", Height = "300px" });
+
+        await LoadData();
+    }
+
+    private async void DeletePayrollTax(PayrollTaxRateDTO tax)
+    {
+        // TODO: Implement delete call to API when ready
+        await PayrollTaxService.DeleteResource($"/api/Tax/DeletePayroll/{tax.Id}");
+        payrollTaxes?.Remove(tax);
+        StateHasChanged();
+    }
+
+    private async void DeleteInvoiceTax(InvoiceTaxRateDTO tax)
+    {
+        // TODO: Implement delete call to API when ready
+        await InvoiceTaxService.DeleteResource($"/api/Tax/DeleteInvoice/{tax.Id}");
+        invoiceTaxes?.Remove(tax);
+        StateHasChanged();
+    }
+
+}

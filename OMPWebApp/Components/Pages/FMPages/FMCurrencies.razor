@@ -1,0 +1,51 @@
+﻿@page "/fm_currencies"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+
+<h3>Currencies</h3>
+
+<div style="display: flex; gap: 2rem; align-items: flex-start;">
+    <RadzenDataGrid TItem="CurrencyDTO" Data="@currencies" PageSize="10"
+                    AllowFiltering="true" AllowPaging="true" AllowSorting="true"
+                    Style="width: 70%;">
+        <Columns>
+            <RadzenDataGridColumn TItem="CurrencyDTO" Property="Code" Title="Code" />
+            <RadzenDataGridColumn TItem="CurrencyDTO" Property="ExchangeRateToDollar" Title="Rate to USD" />
+            <RadzenDataGridColumn TItem="CurrencyDTO" Property="CreationDate" Title="Created">
+                <Template Context="data">
+                    @data.CreationDate.ToString("yyyy-MM-dd HH:mm")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="CurrencyDTO" Property="EditDate" Title="Last Updated">
+                <Template Context="data">
+                    @(data.EditDate.HasValue ? data.EditDate.Value.ToString("yyyy-MM-dd HH:mm") : "-")
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 25%;">
+        <RadzenButton Text="Refresh Currencies" Icon="refresh" Click="RefreshCurrencies" Style="width: 100%;" />
+    </div>
+</div>
+
+@code {
+    private List<CurrencyDTO> currencies = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCurrencies();
+    }
+
+    private async Task LoadCurrencies()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+    }
+
+    private async Task RefreshCurrencies()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency/Refresh");
+    }
+}

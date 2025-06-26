@@ -1,0 +1,122 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject AuthorizationService AuthService
+@inject DialogService DialogService
+@inject ApiConnectionService<InvoiceTaxRateDTO> InvoiceDTO
+@inject ApiConnectionService<PayrollTaxRateDTO> PayrollDTO
+@inject ApiConnectionService<CountryDTO> CountryDTO
+
+<RadzenTemplateForm TItem="object" Submit="@Save">
+    <div class="row">
+        <div class="col-md-6 mt-3">
+            <RadzenTextBox @bind-Value="Title" Name="Title" Placeholder="Enter Title" Style="width:100%;" />
+            <RadzenRequiredValidator Component="Title" Text="Title is required" Style="position: absolute" />
+        </div>
+
+        <div class="col-md-6 mt-3">
+            <RadzenTextBox @bind-Value="Type" Name="Description" Placeholder="Enter Description" Style="width:100%;" />
+        </div>
+
+        <div class="col-md-6 mt-3">
+            <RadzenNumeric @bind-Value="Rate" Name="Rate" Placeholder="Enter Rate (%)" Format="F2" Style="width:100%;" />
+        </div>
+
+        <div class="col-md-6 mt-3">
+            <RadzenDropDown @bind-Value="Country" Data="Countries" TextProperty="Name" ValueProperty="Name"
+                            Name="Country" Placeholder="Select Country" Style="width:100%;" />
+        </div>
+
+        <div class="col-12 mt-4">
+            <RadzenButton Text="Save" Click="Save" Style="margin-right:10px;" />
+            <RadzenButton Text="Close" Click="Close" ButtonStyle="ButtonStyle.Light" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public string type { get; set; }
+    [Parameter] public InvoiceTaxRateDTO? invoiceTax { get; set; }
+    [Parameter] public PayrollTaxRateDTO? payrollTax { get; set; }
+
+    private List<CountryDTO> Countries = new();
+    private string Title;
+    private string Type = "";
+    private decimal Rate = 0;
+    private string Country;
+    private int CustomerId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        CustomerId = AuthService.userDTO.CustomerId;
+        Countries = await CountryDTO.GetResources("/api/Country");
+
+        if (type == "invoice" && invoiceTax != null)
+        {
+            Title = invoiceTax.Title;
+            Type = invoiceTax.Type;
+            Rate = invoiceTax.Rate;
+            Country = invoiceTax.Country;
+        }
+        else if (type == "payroll" && payrollTax != null)
+        {
+            Title = payrollTax.Title;
+            Type = payrollTax.Description;
+            Rate = payrollTax.Rate;
+            Country = payrollTax.Country;
+        }
+    }
+
+    private async Task Save()
+    {
+        if (type == "invoice")
+        {
+            var dto = new InvoiceTaxRateDTO
+                {
+                    Title = Title,
+                    Type = Type,
+                    Rate = Rate,
+                    Country = Country,
+                    CustomerId = CustomerId
+                };
+
+            if (invoiceTax != null && invoiceTax.Id > 0)
+            {
+                dto.Id = invoiceTax.Id;
+                await InvoiceDTO.PutResource($"/api/Tax/UpdateInvoice/{dto.Id}", dto);
+            }
+            else
+            {
+                await InvoiceDTO.PostResource($"/api/Tax/AddInvoice/{CustomerId}", dto);
+            }
+        }
+        else if (type == "payroll")
+        {
+            var dto = new PayrollTaxRateDTO
+                {
+                    Title = Title,
+                    Description = Type,
+                    Rate = Rate,
+                    Country = Country,
+                    CustomerId = CustomerId
+                };
+
+            if (payrollTax != null && payrollTax.Id > 0)
+            {
+                dto.Id = payrollTax.Id;
+                await PayrollDTO.PutResource($"/api/Tax/UpdatePayroll/{dto.Id}", dto);
+            }
+            else
+            {
+                await PayrollDTO.PostResource($"/api/Tax/AddPayroll/{CustomerId}", dto);
+            }
+        }
+
+        DialogService.Close(true);
+    }
+
+    private void Close()
+    {
+        DialogService.Close(false);
+    }
+}

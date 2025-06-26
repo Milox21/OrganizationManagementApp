@@ -1,0 +1,59 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<SpecialGroupsTicketDTO> ApiServiceTicket
+
+<RadzenCard>
+    <div class="mb-3">
+        <RadzenLabel Text="Title" Component="title" />
+        <RadzenTextBox @bind-Value="ticket.Title"
+        Placeholder="Enter ticket title"
+        Class="w-100" />
+    </div>
+    <div class="mb-3">
+        <RadzenLabel Text="Text" Component="text" />
+        <RadzenTextArea @bind-Value="ticket.Text"
+        Placeholder="Enter ticket text"
+        Class="w-100"
+        Rows="5" />
+    </div>
+    <div class="d-flex justify-content-between">
+        <RadzenButton Text="Add"
+        Click="AddTicket"
+        ButtonStyle="ButtonStyle.Primary"
+        Disabled="@(string.IsNullOrEmpty(ticket.Title) || string.IsNullOrEmpty(ticket.Text))" />
+        <RadzenButton Text="Close"
+        Click="Close"
+        ButtonStyle="ButtonStyle.Light" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public int SpecialGroupId { get; set; }
+
+    private SpecialGroupsTicketDTO ticket = new();
+
+    protected override void OnInitialized()
+    {
+        ticket.SpecialGroupId = SpecialGroupId;
+        ticket.UserId = AuthService.userDTO.Id;
+        ticket.CreationDate = DateTime.Now;
+        ticket.IsDeleted = false;
+    }
+
+    private async Task AddTicket()
+    {
+        if (string.IsNullOrEmpty(ticket.Title) || string.IsNullOrEmpty(ticket.Text))
+            return;
+
+        await ApiServiceTicket.PostResource("/api/SpecialGroup/CreateTicket", ticket);
+        DialogService.Close(true);
+    }
+
+    private void Close()
+    {
+        DialogService.Close(false);
+    }
+}

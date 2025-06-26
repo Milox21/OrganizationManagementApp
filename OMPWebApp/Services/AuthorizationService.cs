@@ -1,24 +1,43 @@
-﻿using System.Text;
+﻿using System.ComponentModel;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using ClassLibrary.DTO;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using System.ComponentModel;
+
 
 namespace OMPWebApp.Services
 {
-    public class AuthorizationService
+    public class AuthorizationService : INotifyPropertyChanged
     {
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
+        private readonly ProtectedSessionStorage _storage;
         public UserDTO userDTO;
-        public bool isLogged { get; set; }
+
+        private bool _isLogged;
+        public bool isLogged
+        {
+            get => _isLogged;
+            set
+            {
+                if (_isLogged != value)
+                {
+                    _isLogged = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(isLogged)));
+                }
+            }
+        }
         public bool isUserComplete { get; set; }
         private string accessToken = " ";
         private string refreshToken = " ";
         private DateTime? expiresAt = null;
 
-        public AuthorizationService(HttpClient httpClient)
+        public AuthorizationService(HttpClient httpClient, ProtectedSessionStorage storage)
         {
             _httpClient = httpClient;
+            _storage = storage;
             userDTO = new UserDTO();
             _jsonOptions = new JsonSerializerOptions
             {
@@ -30,14 +49,27 @@ namespace OMPWebApp.Services
             {
                 isLogged = true;
             }
-            
-            isUserComplete = IsUserComplete();
-        }
 
+            isUserComplete = IsUserComplete();
+
+            CheckIfLogged();
+        }
+        public async Task CheckIfLogged()
+        {
+            var passwordResult = await _storage.GetAsync<string>("password");
+            if (passwordResult.Success && passwordResult.Value != null)
+            {
+                var userResult = await _storage.GetAsync<UserDTO>("userData");
+                if (userResult.Success && userResult.Value != null)
+                {
+                    userDTO = userResult.Value;
+                    await Login(userDTO.Email, passwordResult.Value);
+                }
+            }
+        }
         public async Task<string> Login(string email, string password)
         {
 
-            // First request
             var data = new
             {
                 email,
@@ -47,7 +79,7 @@ namespace OMPWebApp.Services
             string jsonProfile = JsonSerializer.Serialize(data, _jsonOptions);
             var content = new StringContent(jsonProfile, Encoding.UTF8, "application/json");
 
-            
+
             var request = new HttpRequestMessage(HttpMethod.Post, "login")
             {
                 Content = content
@@ -76,11 +108,10 @@ namespace OMPWebApp.Services
                     {
                         refreshToken = refreshTokenElement.GetString();
                     }
-                    
+
                 }
             }
 
-            // Prepare the second request (new HttpRequestMessage)
             var userdata = new
             {
                 email,
@@ -102,7 +133,15 @@ namespace OMPWebApp.Services
             {
                 string userres = await userresponse.Content.ReadAsStringAsync();
                 userDTO = JsonSerializer.Deserialize<UserDTO>(userres, _jsonOptions);
+
+                await _storage.SetAsync("userData", userDTO);
+                await _storage.SetAsync("password", password);
                 isLogged = true;
+
+                //await SaveAuthStateAsync(accessToken, refreshToken, expiresAt, userDTO);
+
+
+
                 return "OK";
             }
 
@@ -115,7 +154,6 @@ namespace OMPWebApp.Services
             }
             return "Server Error";
         }
-
         public async Task<string> Register(string email, string password)
         {
             var data = new
@@ -147,7 +185,6 @@ namespace OMPWebApp.Services
 
             return "Unknown error.";
         }
-
         public bool IsUserComplete()
         {
             var requiredProperties = new[] { "Name", "Surname" };
@@ -173,13 +210,14 @@ namespace OMPWebApp.Services
                 isLogged = false;
             }
             isLogged = true;
-            
-        }
 
+        }
         public async Task Logoff()
         {
             userDTO = new UserDTO();
             isLogged = false;
         }
+
+        public event PropertyChangedEventHandler PropertyChanged;
     }
 }

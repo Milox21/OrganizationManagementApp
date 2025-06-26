@@ -1,0 +1,134 @@
+﻿@page "/fm_invoiceincome"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject ApiConnectionService<InvoiceIncomeDTO> ApiServiceInvoice
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+@inject ApiConnectionService<InvoiceTaxRateDTO> ApiServiceTax
+@inject AuthorizationService AuthService
+
+<h3>Invoice Income</h3>
+
+<RadzenDataGrid TItem="InvoiceIncomeDTO" Data="@invoiceIncomes" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Name" Title="Name" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Unit" Title="Unit" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Quantity" Title="Quantity" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="PriceNetto" Title="Price Netto" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueNetto" Title="Netto Value" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTax" Title="VAT %" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTaxValue" Title="VAT Value" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueBrutto" Title="Brutto" />
+        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Currency.Code" Title="Currency" />
+    </Columns>
+</RadzenDataGrid>
+
+<hr />
+
+<h4>Add New Invoice Income</h4>
+
+<RadzenTemplateForm Data="@newIncome" TItem="InvoiceIncomeDTO" Submit="@AddInvoiceIncome">
+    <div class="row">
+        <div class="col-md-3">
+            <RadzenTextBox @bind-Value="newIncome.Name" Placeholder="Name" Style="width: 100%;" />
+        </div>
+        <div class="col-md-2">
+            <RadzenTextBox @bind-Value="newIncome.Unit" Placeholder="Unit" Style="width: 100%;" />
+        </div>
+        <div class="col-md-2">
+            <RadzenNumeric TValue="decimal" @bind-Value="newIncome.Quantity" Placeholder="Quantity" Style="width: 100%;" />
+        </div>
+        <div class="col-md-2">
+            <RadzenNumeric TValue="decimal" @bind-Value="newIncome.PriceNetto" Placeholder="Price Netto" Style="width: 100%;" />
+        </div>
+        <div class="col-md-2">
+            <RadzenDropDown TValue="decimal?" @bind-Value="newIncome.VatTax"
+                            Data="@vatDropdownItems"
+                            TextProperty="Display"
+                            ValueProperty="Rate"
+                            Placeholder="VAT %"
+                            Style="width: 100%;" />
+        </div>
+        <div class="col-md-2">
+            <RadzenDropDown TValue="int?" @bind-Value="newIncome.CurrencyId"
+            Data="@currencies"
+            TextProperty="Code"
+            ValueProperty="Id"
+            Placeholder="Currency"
+            Style="width: 100%;" />
+        </div>
+        <div class="col-md-2 mt-2">
+            <RadzenButton Text="Add Invoice" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    private List<InvoiceIncomeDTO> invoiceIncomes = new();
+    private List<CurrencyDTO> currencies = new();
+    private List<InvoiceTaxRateDTO> vatTaxRates = new();
+    private List<int?> vatTaxValues = new();
+    private InvoiceIncomeDTO newIncome = new();
+
+    private List<VatDropdownItem> vatDropdownItems => vatTaxRates
+    .Select(x => new VatDropdownItem
+        {
+            Id = x.Id,
+            Display = $"{x.Title} ({Math.Round(x.Rate, 2)}%)",
+            Rate = x.Rate
+        }).ToList();
+
+    public class VatDropdownItem
+    {
+        public int Id { get; set; }
+        public string Display { get; set; } = string.Empty;
+        public decimal Rate { get; set; } 
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        InitNewIncome();
+    }
+
+    private async Task LoadData()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        vatTaxRates = await ApiServiceTax.GetResources($"/api/Tax/GetInvoiceTaxRates/{AuthService.userDTO.CustomerId}");
+        invoiceIncomes = await ApiServiceInvoice.GetResources($"/api/InvoiceIncome/GetAll/{AuthService.userDTO.CustomerId}");
+    }
+
+    private void InitNewIncome()
+    {
+        newIncome = new InvoiceIncomeDTO
+            {
+                CustomerId = AuthService.userDTO.CustomerId,
+                CreationDate = DateTime.Now
+            };
+    }
+
+    private async Task AddInvoiceIncome()
+    {
+        // Find the VAT percentage using the selected ID
+        var selectedVatRate = vatTaxRates.FirstOrDefault(x => x.Id == newIncome.VatTax);
+        decimal vatPercentage = selectedVatRate?.Rate ?? 0;
+
+        // Calculate values
+        if (newIncome.Quantity > 0 && newIncome.PriceNetto > 0)
+        {
+            newIncome.ValueNetto = newIncome.Quantity * newIncome.PriceNetto;
+            var vatValue = newIncome.ValueNetto * vatPercentage;
+            newIncome.ValueBrutto = newIncome.ValueNetto + vatValue;
+        }
+        else
+        {
+            newIncome.ValueNetto = 0;
+            newIncome.ValueBrutto = 0;
+        }
+
+        await ApiServiceInvoice.PostResource("/api/InvoiceIncome/Create", newIncome);
+        InitNewIncome();
+        await LoadData();
+    }
+}

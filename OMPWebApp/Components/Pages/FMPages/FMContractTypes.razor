@@ -1,0 +1,119 @@
+﻿@page "/fm_contracts"
+
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<ContractTypeDTO> ContractTypeService
+@inject DialogService DialogService
+
+<style>
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .header-title {
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+</style>
+
+<RadzenCard Style="height: 600px; overflow-y: auto;">
+    <RadzenRow>
+        <RadzenColumn Size="12">
+            <div class="header-row">
+                <div class="header-title">Contract Types</div>
+                <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@AddContractType" />
+            </div>
+
+            <RadzenDataGrid Data="@contractTypes" TItem="ContractTypeDTO"
+                            AllowPaging="true"
+                            PageSize="10"
+                            ShowPagingSummary="true"
+                            AllowSorting="true">
+                <Columns>
+                    <RadzenDataGridColumn TItem="ContractTypeDTO" Property="Title" Title="Title" />
+                    <RadzenDataGridColumn TItem="ContractTypeDTO" Property="Type" Title="Type" />
+                    <RadzenDataGridColumn TItem="ContractTypeDTO" Property="BaseRatePerHourBrutto" Title="Base Rate (Brutto)" />
+                    <RadzenDataGridColumn TItem="ContractTypeDTO" Property="Country" Title="Country" />
+
+                    <!-- Edit Button Column -->
+                    <RadzenDataGridColumn Width="100px" TItem="ContractTypeDTO" Title="Edit">
+                        <Template Context="ct">
+                            <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                          Click="@(args => EditContractType(ct))"
+                                          Style="margin-right: 0.5rem;" />
+                        </Template>
+                    </RadzenDataGridColumn>
+
+                    <!-- Delete Button Column -->
+                    <RadzenDataGridColumn Width="100px" TItem="ContractTypeDTO" Title="Delete">
+                        <Template Context="ct">
+                            <RadzenButton Icon="delete"
+                                          ButtonStyle="ButtonStyle.Danger"
+                                          Size="ButtonSize.Small"
+                                          Click="@(args => DeleteContractType(ct))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                </Columns>
+            </RadzenDataGrid>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    private List<ContractTypeDTO>? contractTypes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        contractTypes = await ContractTypeService.GetResources($"/api/Contracts/GetByCustomer/{AuthService.userDTO.CustomerId}");
+    }
+
+    private async void AddContractType()
+    {
+        await DialogService.OpenAsync<AddContractTypeDialog>("New Contract Type",
+            null,
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "550px"
+                });
+        await LoadData();
+    }
+
+    private async void EditContractType(ContractTypeDTO contractType)
+    {
+        await DialogService.OpenAsync<AddContractTypeDialog>("Edit Contract Type",
+            new Dictionary<string, object>()
+                {
+            { "contractType", contractType }
+                },
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "550px"
+                });
+        await LoadData();
+    }
+
+    private async void DeleteContractType(ContractTypeDTO contractType)
+    {
+        bool? confirmed = await DialogService.Confirm("Are you sure you want to delete this contract type?", "Confirm Delete", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirmed == true)
+        {
+            await ContractTypeService.DeleteResource($"/api/Contracts/Delete/{contractType.Id}");
+            await LoadData();
+        }
+    }
+}

@@ -1,22 +1,38 @@
-﻿@using ClassLibrary.DTO
+﻿@page "/group/{groupId:int}"
+
+@using ClassLibrary.DTO
 @using OMPWebApp.Services
 @using Radzen
 
+@inject DialogService DialogService
 @inject ApiConnectionService<UserDTO> ApiServiceUser
 @inject ApiConnectionService<TaskDTO> ApiServiceTask
+@inject ApiConnectionService<GroupDTO> ApiServiceGroup
+@inject AuthorizationService AuthService
 
+<style>
+    .names li {
+        
+        padding: 0.5rem 0rem;
+        background-color: lightblue;
+        padding-left: 10px;
+        border: solid 1px;
+    }
 
+    .tasks li {
+        min-width:400px;
+    }
+
+</style>
 <RadzenCard>
     <h3>@Group.Title</h3>
     <RadzenRow>
         <!-- First Column - 1/5 of space (Group Members) -->
         <RadzenColumn Size="2">
-            <h4>Group Members</h4>
-            <RadzenDataList Data="groupMembers" TItem="UserDTO">
+            <h5>Group Members</h5>
+            <RadzenDataList class="names" Data="groupMembers" TItem="UserDTO">
                 <Template Context="user">
-                    <div>
-                        <span>@user.Name @user.Surname</span>
-                    </div>
+                    <RadzenLabel> @user.Name @user.Surname </RadzenLabel>
                 </Template>
             </RadzenDataList>
         </RadzenColumn>
@@ -29,11 +45,21 @@
 
         <!-- Third Column - 1/5 of space (Group Tasks) -->
         <RadzenColumn Size="2">
-            <h4>Group Tasks</h4>
-            <RadzenDataList Data="groupTasks" TItem="TaskDTO">
+            
+            <RadzenRow>
+                <h4>Group Tasks</h4>
+                @if (groupAdmins?.Any(admin => admin.Id == AuthService.userDTO?.Id) == true)
+                {
+                    <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Click=" ()=> AddTask()" />
+                }
+            </RadzenRow>
+
+            <RadzenDataList Data="groupTasks" TItem="TaskDTO" class="tasks">
                 <Template Context="task">
-                    <div>
-                        <span>@task.Title</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span>@task.Title <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click=" ()=> SeeDetails(task)" /></span>
+                        <span style="font-size:smaller">Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient).Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient).Surname  </span>
+                        <span style="font-size:smaller">Deadline: @task.DeadlineTime.Day / @task.DeadlineTime.Month  </span>
                     </div>
                 </Template>
             </RadzenDataList>
@@ -42,22 +68,67 @@
 </RadzenCard>
 
 @code {
-    [Parameter] public GroupDTO Group { get; set; }
+    [Parameter] 
+    public int GroupId { get; set; }
 
-    private List<UserDTO> groupMembers = new();
-    private List<TaskDTO> groupTasks = new();
+    private GroupDTO Group = new();
+    private List<UserDTO>? groupMembers = new();
+    private List<TaskDTO>? groupTasks = new();
+    private List<UserDTO>? groupAdmins = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         await LoadData();
     }
 
+
     private async Task LoadData()
     {
+        Group = new GroupDTO();
+        groupMembers = new List<UserDTO>();
+        groupAdmins = new List<UserDTO>();
+        groupTasks = new List<TaskDTO>();
+
+        Group = await ApiServiceGroup.GetResource($"/api/Group/{GroupId}");
+
         if (Group != null)
         {
-            groupMembers = await ApiServiceUser.GetResources($"/api/User/GetByGroup/{Group.Id}");
-            groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{Group.Id}");
+            groupMembers = Group.Users.ToList();
+            groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{GroupId}");
+            groupAdmins = await ApiServiceUser.GetResources($"/api/GroupUser/GetAdmins/{GroupId}");
+        }
+    }
+
+    private async void SeeDetails(TaskDTO task)
+    {
+        var result = await DialogService.OpenAsync<TaskDialog>("Task",
+       new Dictionary<string, object>()
+                       {
+            {"task", task }
+                       },
+       new DialogOptions()
+           {
+               Width = "700px",
+               Height = "512px"
+           });
+    }
+    private async void AddTask()
+    {
+       var result = await DialogService.OpenAsync<AddTaskDialog>("Add Task",
+       new Dictionary<string, object>()
+                   {
+            {"group", Group }
+                   },
+       new DialogOptions()
+           {
+               Width = "700px",
+               Height = "512px"
+           });
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
         }
     }
 }

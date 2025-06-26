@@ -1,0 +1,211 @@
+﻿
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@inject DialogService DialogService
+@inject ApiConnectionService<TaskDTO> ApiServiceTask
+
+<div class="task-dialog">
+    <RadzenCard Style="padding: 20px; max-width: 700px;">
+        <div class="task-header">
+            <h3 class="task-title">@task.Title</h3>
+            <div class="task-status">
+                @if (task.CompletionTime.HasValue)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Completed" />
+                }
+                else if (task.DeadlineTime < DateTime.Now)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Active" />
+                }
+            </div>
+        </div>
+
+        <div class="task-meta">
+            @if (task.IsMeeting)
+            {
+                <RadzenIcon Icon="event" /> <span class="meeting-label">Meeting</span>
+            }
+        </div>
+
+        <div class="task-section">
+            <h4>Details</h4>
+            <div class="task-content">
+                @((MarkupString)FormatText(task.Text))
+            </div>
+        </div>
+
+        <div class="task-section">
+            <h4>Timeline</h4>
+            <RadzenStack Gap="1rem" Class="task-info-grid">
+                <div class="task-info-row">
+                    <div class="task-info-label">
+                        <RadzenIcon Icon="today" />
+                        Created:
+                    </div>
+                    <div class="task-info-value">@task.CreationDate.ToString("MMM dd, yyyy h:mm tt")</div>
+                </div>
+                <div class="task-info-row">
+                    <div class="task-info-label">
+                        <RadzenIcon Icon="timer" />
+                        Deadline:
+                    </div>
+                    <div class="task-info-value">@task.DeadlineTime.ToString("MMM dd, yyyy h:mm tt")</div>
+                </div>
+                @if (task.CompletionTime.HasValue)
+                {
+                    <div class="task-info-row">
+                        <div class="task-info-label">
+                            <RadzenIcon Icon="check_circle" />
+                            Completed:
+                        </div>
+                        <div class="task-info-value">@task.CompletionTime.Value.ToString("MMM dd, yyyy h:mm tt")</div>
+                    </div>
+                }
+                @if (task.LateTime.HasValue)
+                {
+                    <div class="task-info-row">
+                        <div class="task-info-label">
+                            <RadzenIcon Icon="history" />
+                            Late Submission:
+                        </div>
+                        <div class="task-info-value">@task.LateTime.Value.ToString("MMM dd, yyyy h:mm tt")</div>
+                    </div>
+                }
+                @if (task.EditDate.HasValue)
+                {
+                    <div class="task-info-row">
+                        <div class="task-info-label">
+                            <RadzenIcon Icon="edit" />
+                            Last Edited:
+                        </div>
+                        <div class="task-info-value">@task.EditDate.Value.ToString("MMM dd, yyyy h:mm tt")</div>
+                    </div>
+                }
+            </RadzenStack>
+        </div>
+
+        <div class="dialog-footer">
+            <RadzenButton Text="Close" Click="@(() => DialogService.Close(false))" ButtonStyle="ButtonStyle.Light" />
+            @if (task.CompletionTime == null)
+            {
+                <RadzenButton Text="Mark Complete" Click="@MarkAsComplete" ButtonStyle="ButtonStyle.Success" Style="margin-left: 10px;" />
+            }
+        </div>
+    </RadzenCard>
+</div>
+
+<style>
+    .task-dialog {
+    padding: 0;
+    }
+
+    .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    }
+
+    .task-title {
+    margin: 0;
+    font-size: 1.5rem;
+    }
+
+    .task-meta {
+    margin-bottom: 20px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    }
+
+    .meeting-label {
+    margin-left: 5px;
+    font-weight: 500;
+    }
+
+    .task-section {
+    margin-bottom: 20px;
+    }
+
+    .task-section h4 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+    color: #333;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    }
+
+    .task-content {
+    white-space: pre-wrap;
+    padding: 10px;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    min-height: 100px;
+    }
+
+    .task-info-grid {
+    width: 100%;
+    }
+
+    .task-info-row {
+    display: flex;
+    margin-bottom: 8px;
+    }
+
+    .task-info-label {
+    display: flex;
+    align-items: center;
+    width: 140px;
+    font-weight: 500;
+    }
+
+    .task-info-value {
+    flex: 1;
+    }
+
+    .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public TaskDTO task { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (task == null)
+        {
+            task = new TaskDTO
+                {
+                    Title = "Task not found",
+                    Text = "No task data available",
+                    CreationDate = DateTime.Now,
+                    DeadlineTime = DateTime.Now.AddDays(1)
+                };
+        }
+    }
+
+    private string FormatText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return "";
+
+        return text.Replace(Environment.NewLine, "<br />").Replace("\n", "<br />");
+    }
+
+    private async void MarkAsComplete()
+    {
+        task.CompletionTime = DateTime.Now;
+
+        await ApiServiceTask.PutResource($"/api/Task/{task.Id}", task);
+
+        DialogService.Close(true);
+    }
+}

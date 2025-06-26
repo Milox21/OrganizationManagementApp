@@ -1,4 +1,6 @@
-﻿@using ClassLibrary.DTO
+﻿@page "/constants"
+
+@using ClassLibrary.DTO
 @using OMPWebApp.Services
 
 @inject ApiConnectionService<PositionDTO> ApiServicePosition
@@ -9,9 +11,8 @@
     <RadzenSplitterPane Size="50%">
         <h3>Positions</h3>
         <div style="display: flex; gap: 2rem; align-items: flex-start;">
-            <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+            <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" PageSize="7" AllowSorting="true">
                 <Columns>
-
                     <RadzenDataGridColumn TItem="PositionDTO" Property="Name" Title="Name" />
                     <RadzenDataGridColumn TItem="PositionDTO" Property="Description" Title="Description" />
                     <RadzenDataGridColumn TItem="PositionDTO" Title="Delete">
@@ -32,22 +33,15 @@
     <RadzenSplitterPane Size="50%">
         <h3>Countries</h3>
         <div style="display: flex; gap: 2rem; align-items: flex-start;">
-            <RadzenDataGrid TItem="CountryDTO" Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+            <RadzenDataGrid TItem="CountryDTO" PageSize="7"  Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" AllowSorting="true">
                 <Columns>
-                    <RadzenDataGridColumn TItem="CountryDTO" Property="Id" Title="Id" />
                     <RadzenDataGridColumn TItem="CountryDTO" Property="Name" Title="Name" />
-                    <RadzenDataGridColumn TItem="CountryDTO" Title="Delete">
-                        <Template Context="data">
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeleteCountry(data))" />
-                        </Template>
-                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="CountryDTO" Property="Description" Title="Country" />
                 </Columns>
             </RadzenDataGrid>
 
             <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
-                <RadzenTextBox Placeholder="Name" @bind-Value="@newCountryName" />
-                <RadzenTextBox Placeholder="Description" @bind-Value="@newCountryDescription" />
-                <RadzenButton Text="Add Country" Click="AddCountry" />
+                <RadzenButton Text="Refresh" Click="RefreshCountries" />
             </div>
         </div>
     </RadzenSplitterPane>
@@ -59,20 +53,18 @@
     private List<CountryDTO> countries = new();
 
     private string newPositionName;
-    private string newCountryName;
-
     private string newPositionDescription;
-    private string newCountryDescription;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
 
     }
+
     private async Task LoadData()
     {
         positions = await ApiServicePosition.GetResources($"/api/Position/GetByCustomer/{AuthService.userDTO.CustomerId}");
-        countries = await ApiServiceCountry.GetResources($"/api/Country/{AuthService.userDTO.CustomerId}");
+        countries = await ApiServiceCountry.GetResources($"/api/Country");
     }
 
     private async Task AddPosition()
@@ -98,19 +90,8 @@
         await LoadData();
     }
 
-    //TO DO
-    /*
-     * in Financial Module, add stuff so the manager can create:
-     * 1. Invoice Tax Rates
-     * 2. Payroll Tax Rates
-     */
-    private async Task AddCountry()
+    private async Task RefreshCountries()
     {
-       
-    }
-
-    private async Task DeleteCountry(CountryDTO country)
-    {
-
+        countries = await ApiServiceCountry.GetResources($"/api/Country/Refresh");
     }
 }

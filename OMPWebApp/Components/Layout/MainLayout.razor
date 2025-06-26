@@ -3,16 +3,34 @@
 @using ClassLibrary.DTO
 @using OMPWebApp.Components.Pages
 @using OMPWebApp.Services
+@using System.ComponentModel
+
 @inject AuthorizationService AuthorizationService 
 @inject ApiConnectionService<CustomerDTO> CustomerService
 @inject DialogService DialogService
+
+@implements IDisposable
 
 @rendermode InteractiveServer
 
 @if (AuthorizationService.isLogged)
 {
-    <MainPanel></MainPanel>
 
+    <RadzenLayout>
+        <!-- Header <Header /> -->
+        <NavMenu />
+        <RadzenBody>
+            <div class="rz-p-4">
+                @Body
+            </div>
+        </RadzenBody>
+
+        <RadzenFooter>
+            Property of Kamil Woźny
+        </RadzenFooter>
+
+        <RadzenDialog />
+    </RadzenLayout>
 }
 else
 {
@@ -46,7 +64,7 @@ else
                 </div>
 
                 <div style="text-align: center; margin-top: 10px;">
-                    <RadzenButton Text="Login User 3 (user)" Click="@(() => {loginData.Username  = "user3@gmail.com"; loginData.Password="TrudneHaslo!23" ;})" Style=" font-size: 14px; background-color:coral;" />
+                    <RadzenButton Text="Login User 3 (user)" Click="@(() => {loginData.Username  = "putis333@gmail.com"; loginData.Password="TrudneHaslo!23" ;})" Style=" font-size: 14px; background-color:coral;" />
                 </div>
 
                 
@@ -126,6 +144,25 @@ else
     private string registerSuccess = "";
     private string customerPassword = "";
     private string customerName = "";
+
+    protected override void OnInitialized()
+    {
+        AuthorizationService.PropertyChanged += AuthorizationServicePropertyChanged;
+        base.OnInitialized();
+    }
+
+    private void AuthorizationServicePropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AuthorizationService.isLogged))
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthorizationService.PropertyChanged -= AuthorizationServicePropertyChanged;
+    }
 
     private void ToggleView()
     {

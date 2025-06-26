@@ -98,12 +98,58 @@ namespace OMP_API.Controllers
             {
                 await _context.SaveChangesAsync();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
 
             }
-            
+
             return Ok("entity created successfully");
         }
+
+        [HttpGet("{id}")]
+        public override async Task<ActionResult<GroupDTO>> GetByIdAsync(int id)
+        {
+            var groupDto = await _context.Groups
+                .Where(e => e.Id == id && e.IsDeleted == false)
+                .Select(item => new GroupDTO
+                {
+                    Id = item.Id,
+                    Title = item.Title,
+                    Description = item.Description,
+                    CustomerId = item.CustomerId,
+                    CreationDate = item.CreationDate,
+                    EditDate = item.EditDate,
+                    IsDeleted = item.IsDeleted,
+                    Users = item.GroupsUsers
+                        .Where(gu => gu.GroupId == item.Id)
+                        .Select(gu => new UserDTO
+                        {
+                            Id = gu.User.Id,
+                            Name = gu.User.Name,
+                            Surname = gu.User.Surname,
+                            CustomerId = gu.User.CustomerId,
+                            PositionId = gu.User.PositionId,
+                            CountryId = gu.User.CountryId,
+                            CreationDate = gu.User.CreationDate,
+                            EditDate = gu.User.EditDate,
+                            Position = new PositionDTO
+                            {
+                                Id = gu.User.Position.Id,
+                                Name = gu.User.Position.Name,
+                                Description = gu.User.Position.Description
+                            }
+                        })
+                        .ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (groupDto == null)
+            {
+                return NotFound($"Group with id {id} not found or has been deleted.");
+            }
+
+            return Ok(groupDto);
+        }
+
     }
 }

@@ -1,19 +1,41 @@
-﻿using ClassLibrary.Models.ModelInterfaces;
+﻿using System.Text.Json.Serialization;
+using ClassLibrary.Models.ModelInterfaces;
 
 namespace ClassLibrary.DTO
 {
     public class SpecialGroupDTO : IBaseModel
     {
+        [JsonPropertyName("id")]
         public int Id { get; set; }
+
+        [JsonPropertyName("title")]
         public string Title { get; set; } = null!;
+
+        [JsonPropertyName("description")]
         public string Description { get; set; } = null!;
+
+        [JsonPropertyName("customerId")]
         public int CustomerId { get; set; }
+
+        [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
+
+        [JsonPropertyName("editDate")]
         public DateTime? EditDate { get; set; }
+
+        [JsonPropertyName("deleteDate")]
         public DateTime? DeleteDate { get; set; }
+
+        [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
-        public virtual CustomerDTO Customer { get; set; } = null!;
-        public virtual ICollection<SpecialGroupsTicketDTO> SpecialGroupsTickets { get; set; } = new List<SpecialGroupsTicketDTO>();
-        public virtual ICollection<SpecialGroupsUserDTO> SpecialGroupsUsers { get; set; } = new List<SpecialGroupsUserDTO>();
+
+        [JsonPropertyName("users")]
+        public virtual ICollection<UserDTO>? Users { get; set; } = new List<UserDTO>();
+
+        [JsonPropertyName("specialGroupsTickets")]
+        public virtual ICollection<SpecialGroupsTicketDTO>? SpecialGroupsTickets { get; set; } = new List<SpecialGroupsTicketDTO>();
+
+        [JsonPropertyName("specialGroupsUsers")]
+        public virtual ICollection<SpecialGroupsUserDTO>? SpecialGroupsUsers { get; set; } = new List<SpecialGroupsUserDTO>();
     }
 }

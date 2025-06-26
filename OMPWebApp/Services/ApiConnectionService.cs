@@ -17,6 +17,10 @@ namespace OMPWebApp.Services
                 ReferenceHandler = ReferenceHandler.IgnoreCycles,
             };
         }
+        public async Task ExecuteGetRequest(string address)
+        {
+            await _httpClient.GetAsync(address);
+        }
 
         public async Task<T> GetResource(string address)
         {

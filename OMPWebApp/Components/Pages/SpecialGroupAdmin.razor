@@ -1,4 +1,4 @@
-﻿@page "/groups"
+﻿@page "/special_groups"
 
 @using ClassLibrary.DTO
 @using OMPWebApp.Services
@@ -6,42 +6,42 @@
 @inject DialogService DialogService
 @inject AuthorizationService AuthService
 @inject ApiConnectionService<UserDTO> ApiServiceUser
-@inject ApiConnectionService<GroupDTO> ASGroup
+@inject ApiConnectionService<SpecialGroupDTO> ASSpecialGroup
 
 <div class="rz-p-4 rz-text-align-left">
     <RadzenButton Text="Add Group" ButtonStyle="ButtonStyle.Secondary" Click=@NewGroupDialog />
 </div>
 
-<RadzenDataGrid TItem="GroupDTO" Data="@Groups" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+<RadzenDataGrid TItem="SpecialGroupDTO" Data="@Groups" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
     <Columns>
 
-        <RadzenDataGridColumn TItem="GroupDTO" Property="Title" Title="Title"/>
-        <RadzenDataGridColumn TItem="GroupDTO" Property="Description" Title="Description"/>
-        <RadzenDataGridColumn TItem="GroupDTO" Title="Edit" Width="100px">
+        <RadzenDataGridColumn TItem="SpecialGroupDTO" Property="Title" Title="Title" />
+        <RadzenDataGridColumn TItem="SpecialGroupDTO" Property="Description" Title="Description" />
+        <RadzenDataGridColumn TItem="SpecialGroupDTO" Title="Edit" Width="100px">
             <Template Context="group">
                 <RadzenButton Text="Edit" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Primary"
                               Click="@(async () => await EditGroupDialog(group))" />
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="GroupDTO" Title="Manage" Width="120px">
+        <RadzenDataGridColumn TItem="SpecialGroupDTO" Title="Manage" Width="120px">
             <Template Context="group">
                 <RadzenButton Text="Manage" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Base"
                               Click="@(async () => await ManageGroup(group))" />
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="GroupDTO" Title="Delete" Width="120px">
+        <RadzenDataGridColumn TItem="SpecialGroupDTO" Title="Delete" Width="120px">
             <Template Context="group">
                 <RadzenButton Text="Delete" Style="margin-left: 5px;" ButtonStyle="ButtonStyle.Danger"
-                              Click="@(async () => await DeleteUser(group))" />
+                              Click="@(async () => await DeleteGroup(group))" />
             </Template>
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
 
 @code {
-    List<GroupDTO>? Groups = new();
+    List<SpecialGroupDTO>? Groups = new();
 
 
     protected override async Task OnInitializedAsync()
@@ -52,27 +52,26 @@
 
     private async Task LoadData()
     {
-        Groups = await ASGroup.GetResources($"/api/Group/GetByCustomer/{AuthService.userDTO.CustomerId}");
+        Groups = await ASSpecialGroup.GetResources($"/api/SpecialGroup/GetByCustomer/{AuthService.userDTO.CustomerId}");
     }
 
     public async Task NewGroupDialog()
     {
-        await DialogService.OpenAsync<AddGroupDialog>("Add Group", new Dictionary<string, object>(), new DialogOptions()
+        await DialogService.OpenAsync<AddSpecialGroupDialog>("Add Group", new Dictionary<string, object>(), new DialogOptions()
             {
- 
                 Width = "700px",
                 Height = "512px"
             });
         await LoadData();
     }
 
-    private async Task EditGroupDialog(GroupDTO group)
+    private async Task EditGroupDialog(SpecialGroupDTO group)
     {
-        await DialogService.OpenAsync<EditGroupDialog>("Edit Group",
+        await DialogService.OpenAsync<EditSpecialGroupDialog>("Edit Group",
         new Dictionary<string, object>()
-                    {
+                        {
             {"group", group },
-                    },
+                        },
         new DialogOptions()
             {
                 Width = "700px",
@@ -81,13 +80,13 @@
         await LoadData();
     }
 
-    private async Task ManageGroup(GroupDTO group)
+    private async Task ManageGroup(SpecialGroupDTO group)
     {
-        await DialogService.OpenAsync<ManageGroupDialog>("Manage Group",
+        await DialogService.OpenAsync<ManageSpecialGroupDialog>("Manage Group",
         new Dictionary<string, object>()
-                        {
+                            {
             {"group", group },
-                        },
+                            },
         new DialogOptions()
             {
                 Width = "1000px",
@@ -96,7 +95,7 @@
         await LoadData();
     }
 
-    private async Task DeleteUser(GroupDTO group)
+    private async Task DeleteGroup(SpecialGroupDTO group)
     {
         if (group == null)
         {
@@ -105,7 +104,7 @@
 
         group.IsDeleted = true;
         group.DeleteDate = DateTime.Now;
-        await ASGroup.PutResource($"/api/Group/{group.Id}", group);
+        await ASSpecialGroup.PutResource($"/api/SpecialGroup/{group.Id}", group);
 
         Groups.Remove(group);
         await LoadData();

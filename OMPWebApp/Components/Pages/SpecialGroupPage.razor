@@ -1,0 +1,121 @@
+﻿@page "/specialgroup/{groupId:int}"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject DialogService DialogService
+@inject ApiConnectionService<UserDTO> ApiServiceUser
+@inject ApiConnectionService<SpecialGroupsTicketDTO> ApiServiceTicket
+@inject ApiConnectionService<SpecialGroupDTO> ApiServiceSpecialGroup
+@inject AuthorizationService AuthService
+
+<RadzenCard>
+    <h3>@SpecialGroup.Title</h3>
+    <RadzenRow>
+        <!-- Left Column - Admin/Owner info -->
+        <RadzenColumn Size="3">
+            <h5>Group Owner</h5>
+            @if (groupOwner != null)
+            {
+                <div class="p-3 border rounded">
+                    <RadzenLabel>Group Overseer</RadzenLabel>
+                    <RadzenLabel>@groupOwner.Name @groupOwner.Surname</RadzenLabel>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3" style="margin-top:20px">
+                    @if (isUserAdmin)
+                    {
+                        <RadzenButton Icon="add_circle" Text="New Ticket" ButtonStyle="ButtonStyle.Primary" Click="() => AddTicket()" />
+                    }
+                </div>
+            }
+            else
+            {
+                <p>No owner assigned</p>
+            }
+        </RadzenColumn>
+
+        <!-- Right Column - Admin Tickets -->
+        <RadzenColumn Size="9">
+            
+
+            @if (adminTickets != null && adminTickets.Any())
+            {
+                <RadzenDataList Data="adminTickets" TItem="SpecialGroupsTicketDTO" WrapItems="true">
+                    <Template Context="ticket">
+                        <RadzenCard class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">@ticket.Title</h5>
+                                <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@ticket.CreationDate.ToString("dd/MM/yyyy")" />
+                            </div>
+                            <p>@ticket.Text</p>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            }
+            else
+            {
+                <RadzenCard>
+                    <p class="text-center my-4">No posts yet</p>
+                </RadzenCard>
+            }
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    [Parameter]
+    public int GroupId { get; set; }
+
+    private SpecialGroupDTO SpecialGroup = new();
+    private UserDTO? groupOwner = null;
+    private List<SpecialGroupsTicketDTO>? adminTickets = new();
+    private bool isUserAdmin = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        SpecialGroup = new SpecialGroupDTO();
+        adminTickets = new List<SpecialGroupsTicketDTO>();
+
+        SpecialGroup = await ApiServiceSpecialGroup.GetResource($"/api/SpecialGroup/{GroupId}");
+
+        if (SpecialGroup != null)
+        {
+            UserDTO owner = await ApiServiceUser.GetResource($"/api/SpecialGroup/GetAdmin/{GroupId}");
+            if (owner != null)
+            {
+                groupOwner = owner;
+            }
+
+            adminTickets = await ApiServiceTicket.GetResources($"/api/SpecialGroup/GetTickets/{GroupId}");
+
+            isUserAdmin = groupOwner?.Id == AuthService.userDTO?.Id;
+        }
+    }
+
+    private async void AddTicket()
+    {
+        var result = await DialogService.OpenAsync<AddTicketDialog>("New Ticket",
+            new Dictionary<string, object>()
+                {
+                    {"SpecialGroupId", SpecialGroup.Id }
+                },
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "500px"
+                });
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
+    }
+}

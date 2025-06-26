@@ -1,0 +1,70 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject AuthorizationService AuthService
+@inject DialogService DialogService
+@inject ApiConnectionService<ContractTypeDTO> ContractTypeService
+
+<RadzenTemplateForm TItem="ContractTypeDTO" Data="@model" Submit="HandleValidSubmit">
+    <div class="p-3">
+        <RadzenFieldset Text="Contract Type Details">
+            <RadzenLabel Text="Title" />
+            <RadzenTextBox @bind-Value="model.Title" Style="width:100%;" Name="Title" />
+            <RadzenRequiredValidator Component="Title" Text="Title is required" />
+
+            <RadzenLabel Text="Type" Style="margin-top:10px;" />
+            <RadzenTextBox @bind-Value="model.Type" Style="width:100%;" Name="Type" />
+            <RadzenRequiredValidator Component="Type" Text="Type is required" />
+
+            <RadzenLabel Text="Base Rate per Hour (Brutto)" Style="margin-top:10px;" />
+            <RadzenNumeric TValue="decimal" @bind-Value="model.BaseRatePerHourBrutto" Style="width:100%;" Name="BaseRatePerHourBrutto" />
+            <RadzenRequiredValidator Component="BaseRatePerHourBrutto" Text="Rate is required" />
+
+            <RadzenLabel Text="Country" Style="margin-top:10px;" />
+            <RadzenTextBox @bind-Value="model.Country" Style="width:100%;" Name="Country" />
+            <RadzenRequiredValidator Component="Country" Text="Country is required" />
+        </RadzenFieldset>
+
+        <div class="mt-3 text-right">
+            <RadzenButton Text="Save" Icon="save" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Style="margin-right: 10px;" />
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@(() => DialogService.Close())" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public ContractTypeDTO? contractType { get; set; }
+
+    private ContractTypeDTO model = new();
+
+    protected override void OnInitialized()
+    {
+        if (contractType != null)
+        {
+            model = new ContractTypeDTO
+                {
+                    Id = contractType.Id,
+                    Title = contractType.Title,
+                    Type = contractType.Type,
+                    BaseRatePerHourBrutto = contractType.BaseRatePerHourBrutto,
+                    Country = contractType.Country,
+                    CustomerId = contractType.CustomerId
+                };
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (model.Id > 0)
+        {
+            await ContractTypeService.PutResource($"/api/Contracts/Update/{model.Id}", model);
+        }
+        else
+        {
+            model.CustomerId = AuthService.userDTO.CustomerId;
+            await ContractTypeService.PostResource("/api/Contracts/Create", model);
+        }
+
+        DialogService.Close();
+    }
+}

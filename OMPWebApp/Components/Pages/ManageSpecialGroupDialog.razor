@@ -1,0 +1,62 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+@inject DialogService DialogService
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<SpecialGroupDTO> ApiServiceGroup
+@inject ApiConnectionService<UserDTO> ApiServiceUser
+@inject ApiConnectionService<GroupsUserDTO> ApiServiceGU
+
+<RadzenCard>
+    <h3>Change Special Group Owner</h3>
+    <div class="mb-3">
+        <RadzenDropDown @bind-Value="selectedUserId"
+                        Data="allUsers"
+                        ValueProperty="Id"
+                        TextProperty="Name"
+                        Placeholder="Select a user"
+                        Class="w-100">
+            <Template Context="user">
+                @((user as UserDTO).Name) @((user as UserDTO).Surname)
+            </Template>
+        </RadzenDropDown>
+    </div>
+    <div class="d-flex justify-content-between">
+        <RadzenButton Text="Make Owner"
+                      Click="MakeUserOwner"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Disabled="@(selectedUserId == null)" />
+        <RadzenButton Text="Close"
+                      Click="Close"
+                      ButtonStyle="ButtonStyle.Light" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public SpecialGroupDTO group { get; set; }
+    private List<UserDTO> allUsers = new();
+    private int? selectedUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        allUsers = await ApiServiceUser.GetResources($"/api/User/GetByCustomer/{AuthService.userDTO.CustomerId}");
+    }
+
+    private async Task MakeUserOwner()
+    {
+        if (selectedUserId == null)
+            return;
+
+        await ApiServiceGroup.ExecuteGetRequest($"/api/SpecialGroup/AddAdmin/{group.Id}/{selectedUserId}");
+    }
+
+    private void Close()
+    {
+        DialogService.Close(true);
+    }
+}

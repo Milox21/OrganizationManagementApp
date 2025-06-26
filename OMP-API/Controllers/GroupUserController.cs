@@ -37,6 +37,27 @@ namespace OMP_API.Controllers
             return Ok("User added to the group.");
         }
 
+        [HttpGet("AddAdmin/{groupid}/{userid}")]
+        public async Task<ActionResult> AddAdmin(int groupid, int userid)
+        {
+            if (userid == 0 || groupid == 0)
+            {
+                return BadRequest("Invalid group ID or user ID.");
+            }
+
+            var connection = await _context.GroupsUsers
+                .FirstOrDefaultAsync(e => e.GroupId == groupid && e.UserId == userid);
+
+            if (connection == null)
+            {
+                return NotFound("User not found in the group.");
+            }
+            connection.IsOwner = true;
+            await _context.SaveChangesAsync();
+
+            return Ok("User promoted to Admin.");
+        }
+
         [HttpDelete("DeleteFromGroup/{groupid}/{userid}")]
         public async Task<ActionResult> DeleteFromGroup(int groupid, int userid)
         {
@@ -57,6 +78,34 @@ namespace OMP_API.Controllers
             await _context.SaveChangesAsync();
 
             return Ok("User removed from the group.");
+        }
+
+        [HttpGet("GetAdmins/{groupid}")]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAdmins(int groupid)
+        {
+            var usersDTO = await _context.GroupsUsers
+                .Where(gu => gu.GroupId == groupid && gu.IsOwner == true)
+                .Select(gu => new UserDTO
+                {
+                    Id = gu.User.Id,
+                    IdentityUserId = gu.User.IdentityUserId,
+                    Name = gu.User.Name,
+                    Surname = gu.User.Surname,
+                    CustomerId = gu.User.CustomerId,
+                    PositionId = gu.User.PositionId,
+                    CountryId = gu.User.CountryId,
+                    CreationDate = gu.User.CreationDate,
+                    EditDate = gu.User.EditDate,
+                    Position = new PositionDTO
+                    {
+                        Id = gu.User.Position != null ? gu.User.Position.Id : 0,
+                        Name = gu.User.Position.Name,
+                        Description = gu.User.Position.Description
+                    }
+                })
+                .ToListAsync();
+
+            return usersDTO;
         }
     }
 

@@ -1,0 +1,61 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject DialogService DialogService
+@inject ApiConnectionService<TaskDTO> ApiServiceTask
+@inject AuthorizationService AuthService
+
+<RadzenTemplateForm TItem="TaskDTO" Data="@task" Submit="@Save" Style="padding: 20px;">
+    <RadzenFieldset Legend="Add Task">
+        <RadzenLabel Text="To" />
+        <RadzenDropDown @bind-Value="task.TaskRecipient"
+        Data="users"
+        TextProperty="Name"
+        ValueProperty="Id"
+        Placeholder="Select a user"
+        Style="width: 100%;" />
+
+        <RadzenLabel Text="Title" Style="margin-top: 10px;" />
+        <RadzenTextBox @bind-Value="task.Title" Placeholder="Enter Title" Style="width: 100%;" />
+
+        <RadzenLabel Text="Text" Style="margin-top: 10px;" />
+        <RadzenTextArea @bind-Value="task.Text" Placeholder="Enter Title" Style="width: 100%; height: 150px" Rows="6"
+        MaxLength="1000" />
+
+        <RadzenLabel Text="Deadline" Style="margin-top: 10px;" />
+        <RadzenDatePicker @bind-Value="task.DeadlineTime" Min="DateTime.Today" ShowTime=" true" HourFormat="12" DateFormat="MM/dd/yyyy h:mm tt" Style="width: 100%;" />
+
+        <RadzenLabel Text="Is it meeting?" Style="margin-top: 10px; width:100%" />
+        <RadzenSwitch @bind-Value="task.IsMeeting" />
+
+    </RadzenFieldset>
+
+    <div style="text-align: center; margin-top: 20px;">
+        <RadzenButton Text="Save" ButtonType="ButtonType.Submit" Style="margin-right: 10px; background-color: #0078D7; color: white;" />
+        <RadzenButton Text="Cancel" Click="@((args) => DialogService.Close(false))" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public GroupDTO group { get; set; }
+    private TaskDTO task { get; set; }
+    IEnumerable<UserDTO> users { get; set; }
+
+    protected override void OnInitialized()
+    {
+        task = new TaskDTO();
+        users = group.Users.Where(user => user.Id != AuthService.userDTO.Id).ToList();
+        // If needed, you can set some default values
+        task.DeadlineTime = DateTime.Now.AddDays(1);  
+    }
+
+    private async Task Save()
+    {
+        task.TaskSender = group.Id;
+        //task.CreationDate = DateTime.Now;
+
+        await ApiServiceTask.PostResource($"/api/Task", task);
+
+        DialogService.Close(true);
+    }
+}
