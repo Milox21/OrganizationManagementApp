@@ -35,12 +35,13 @@ namespace OMP_API.Controllers
                     Unit = i.Unit,
                     Quantity = i.Quantity,
                     PriceNetto = i.PriceNetto,
-                    VatTax = i.VatTax,
+                    VatTaxValue = i.VatTaxValue,
                     CurrencyId = i.CurrencyId,
                     ValueNetto = i.ValueNetto,
                     ValueBrutto = i.ValueBrutto,
                     CustomerId = i.CustomerId,
                     CreationDate = i.CreationDate,
+                    VatTaxRate = i.VatTaxRate,
                     EditDate = i.EditDate,
                     DeleteDate = i.DeleteDate,
                     IsDeleted = i.IsDeleted
@@ -60,11 +61,11 @@ namespace OMP_API.Controllers
                 Unit = dto.Unit,
                 Quantity = dto.Quantity,
                 PriceNetto = dto.PriceNetto,
-                VatTax = dto.VatTax,
                 CurrencyId = dto.CurrencyId,
-                ValueNetto = dto.Quantity * dto.PriceNetto,
-                VatTaxValue = dto.ValueNetto * dto.VatTax.Value,
-                ValueBrutto = dto.ValueNetto + dto.ValueNetto * dto.VatTax.Value,
+                ValueNetto = dto.ValueNetto,
+                VatTaxRate = dto.VatTaxRate,
+                VatTaxValue = dto.VatTaxValue,
+                ValueBrutto = dto.ValueBrutto,
                 CustomerId = dto.CustomerId,
                 CreationDate = DateTime.UtcNow,
                 IsDeleted = false
@@ -85,11 +86,11 @@ namespace OMP_API.Controllers
             entity.Unit = dto.Unit;
             entity.Quantity = dto.Quantity;
             entity.PriceNetto = dto.PriceNetto;
-            entity.VatTax = dto.VatTax;
             entity.CurrencyId = dto.CurrencyId;
-            entity.ValueNetto = dto.Quantity * dto.PriceNetto;
-            entity.VatTaxValue = dto.ValueNetto * dto.VatTax.Value;
-            entity.ValueBrutto = dto.ValueNetto + dto.ValueNetto * dto.VatTax.Value;
+            entity.VatTaxRate = dto.VatTaxRate;
+            entity.VatTaxRate = dto.VatTaxRate ;
+            entity.VatTaxValue = dto.VatTaxValue;
+            entity.ValueBrutto = dto.ValueBrutto;
             entity.EditDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

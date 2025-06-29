@@ -18,10 +18,14 @@ namespace ClassLibrary.DTO
         public DateTime CreationDate { get; set; }
         public DateTime? EditDate { get; set; }
         public DateTime? DeleteDate { get; set; }
+        public decimal? VatTaxRate { get; set; }
         public bool IsDeleted { get; set; }
         public virtual CurrencyDTO? Currency { get; set; }
         public virtual CustomerDTO Customer { get; set; } = null!;
         public virtual ICollection<ReccuringCostInvoiceDTO> ReccuringCostInvoices { get; set; } = new List<ReccuringCostInvoiceDTO>();
         public virtual InvoiceTaxRateDTO? VatTaxNavigation { get; set; }
+
+
+        public string? CurrencyCode { get; set; }
     }
 }

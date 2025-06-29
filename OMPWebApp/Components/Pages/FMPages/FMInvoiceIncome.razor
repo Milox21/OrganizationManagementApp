@@ -7,62 +7,71 @@
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
 @inject ApiConnectionService<InvoiceTaxRateDTO> ApiServiceTax
 @inject AuthorizationService AuthService
+<RadzenCard>
+    <h4>Add New Invoice Income</h4>
 
-<h3>Invoice Income</h3>
+    <RadzenTemplateForm Data="@newIncome" TItem="InvoiceIncomeDTO" Submit="@AddInvoiceIncome">
+        
+        <div class="row mb-3"> 
+            <div class="col-md-6"> 
+                <RadzenTextBox @bind-Value="newIncome.Name" Placeholder="Name" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3"> 
+                <RadzenTextBox @bind-Value="newIncome.Unit" Placeholder="Unit" Style="width: 100%;" />
+            </div>
+        </div>
 
-<RadzenDataGrid TItem="InvoiceIncomeDTO" Data="@invoiceIncomes" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
-    <Columns>
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Name" Title="Name" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Unit" Title="Unit" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Quantity" Title="Quantity" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="PriceNetto" Title="Price Netto" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueNetto" Title="Netto Value" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTax" Title="VAT %" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTaxValue" Title="VAT Value" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueBrutto" Title="Brutto" />
-        <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Currency.Code" Title="Currency" />
-    </Columns>
-</RadzenDataGrid>
+        <div class="row mb-3"> 
+            <div class="col-md-3"> 
+                <RadzenNumeric TValue="decimal" @bind-Value="newIncome.Quantity" Placeholder="Quantity" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3"> 
+                <RadzenNumeric TValue="decimal" @bind-Value="newIncome.PriceNetto" Placeholder="Price Netto" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3"> 
+                <RadzenDropDown TValue="decimal?" @bind-Value="newIncome.VatTaxRate"
+                                Data="@vatDropdownItems"
+                                TextProperty="Display"
+                                ValueProperty="Rate"
+                                Placeholder="VAT %"
+                                Style="width: 100%;" />
+            </div>
+            <div class="col-md-3"> 
+                <RadzenDropDown TValue="int?" @bind-Value="newIncome.CurrencyId"
+                                Data="@currencies"
+                                TextProperty="Code"
+                                ValueProperty="Id"
+                                Placeholder="Currency"
+                                Style="width: 100%;" />
+            </div>
+        </div>
 
-<hr />
+        <div class="row">
+            <div class="col-md-12"> 
+                <RadzenButton Text="Add Invoice" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
+            </div>
+        </div>
 
-<h4>Add New Invoice Income</h4>
+    </RadzenTemplateForm>
+</RadzenCard>
 
-<RadzenTemplateForm Data="@newIncome" TItem="InvoiceIncomeDTO" Submit="@AddInvoiceIncome">
-    <div class="row">
-        <div class="col-md-3">
-            <RadzenTextBox @bind-Value="newIncome.Name" Placeholder="Name" Style="width: 100%;" />
-        </div>
-        <div class="col-md-2">
-            <RadzenTextBox @bind-Value="newIncome.Unit" Placeholder="Unit" Style="width: 100%;" />
-        </div>
-        <div class="col-md-2">
-            <RadzenNumeric TValue="decimal" @bind-Value="newIncome.Quantity" Placeholder="Quantity" Style="width: 100%;" />
-        </div>
-        <div class="col-md-2">
-            <RadzenNumeric TValue="decimal" @bind-Value="newIncome.PriceNetto" Placeholder="Price Netto" Style="width: 100%;" />
-        </div>
-        <div class="col-md-2">
-            <RadzenDropDown TValue="decimal?" @bind-Value="newIncome.VatTax"
-                            Data="@vatDropdownItems"
-                            TextProperty="Display"
-                            ValueProperty="Rate"
-                            Placeholder="VAT %"
-                            Style="width: 100%;" />
-        </div>
-        <div class="col-md-2">
-            <RadzenDropDown TValue="int?" @bind-Value="newIncome.CurrencyId"
-            Data="@currencies"
-            TextProperty="Code"
-            ValueProperty="Id"
-            Placeholder="Currency"
-            Style="width: 100%;" />
-        </div>
-        <div class="col-md-2 mt-2">
-            <RadzenButton Text="Add Invoice" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
-        </div>
-    </div>
-</RadzenTemplateForm>
+<RadzenCard Style="margin-top: 50px">
+    <h3>Invoice Income</h3>
+
+    <RadzenDataGrid TItem="InvoiceIncomeDTO" Data="@invoiceIncomes" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Name" Title="Name" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Unit" Title="Unit" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="Quantity" Title="Quantity" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="PriceNetto" Title="Price Netto" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueNetto" Title="Netto Value" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTaxRate" Title="VAT %" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="VatTaxValue" Title="VAT Value" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="ValueBrutto" Title="Brutto" />
+            <RadzenDataGridColumn TItem="InvoiceIncomeDTO" Property="CurrencyCode" Title="Currency" />
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
 
 @code {
     private List<InvoiceIncomeDTO> invoiceIncomes = new();
@@ -97,6 +106,11 @@
         currencies = await ApiServiceCurrency.GetResources("/api/Currency");
         vatTaxRates = await ApiServiceTax.GetResources($"/api/Tax/GetInvoiceTaxRates/{AuthService.userDTO.CustomerId}");
         invoiceIncomes = await ApiServiceInvoice.GetResources($"/api/InvoiceIncome/GetAll/{AuthService.userDTO.CustomerId}");
+        foreach (var income in invoiceIncomes)
+        {
+            income.CurrencyCode = currencies
+                .FirstOrDefault(c => c.Id == income.CurrencyId)?.Code;
+        }
     }
 
     private void InitNewIncome()
@@ -107,23 +121,24 @@
                 CreationDate = DateTime.Now
             };
     }
-
     private async Task AddInvoiceIncome()
     {
-        // Find the VAT percentage using the selected ID
-        var selectedVatRate = vatTaxRates.FirstOrDefault(x => x.Id == newIncome.VatTax);
-        decimal vatPercentage = selectedVatRate?.Rate ?? 0;
+        // Retrieve VAT percentage from selected ID
+        decimal selectedVatRate = (decimal)newIncome.VatTaxRate;
 
-        // Calculate values
+        // Ensure Quantity and Price are valid
         if (newIncome.Quantity > 0 && newIncome.PriceNetto > 0)
         {
             newIncome.ValueNetto = newIncome.Quantity * newIncome.PriceNetto;
-            var vatValue = newIncome.ValueNetto * vatPercentage;
-            newIncome.ValueBrutto = newIncome.ValueNetto + vatValue;
+
+            // Calculate VAT value and Brutto
+            newIncome.VatTaxValue = newIncome.ValueNetto * (newIncome.VatTaxRate / 100);
+            newIncome.ValueBrutto = newIncome.ValueNetto + newIncome.VatTaxValue;
         }
         else
         {
             newIncome.ValueNetto = 0;
+            newIncome.VatTaxRate = 0;
             newIncome.ValueBrutto = 0;
         }
 

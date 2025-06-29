@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 namespace OMP_API.Models;
 
 [Table("InvoiceIncome")]
+[Index("CurrencyId", Name = "IX_InvoiceIncome_currencyId")]
+[Index("CustomerId", Name = "IX_InvoiceIncome_customerId")]
+[Index("VatTax", Name = "IX_InvoiceIncome_vatTax")]
 public partial class InvoiceIncome
 {
     [Key]
@@ -42,9 +45,6 @@ public partial class InvoiceIncome
     [Column("customerId")]
     public int CustomerId { get; set; }
 
-    [Column("currencyId")]
-    public int? CurrencyId { get; set; }
-
     [Column("creationDate", TypeName = "datetime")]
     public DateTime CreationDate { get; set; }
 
@@ -56,6 +56,12 @@ public partial class InvoiceIncome
 
     [Column("isDeleted")]
     public bool IsDeleted { get; set; }
+
+    [Column("currencyId")]
+    public int? CurrencyId { get; set; }
+
+    [Column("vatTaxRate", TypeName = "decimal(10, 2)")]
+    public decimal? VatTaxRate { get; set; }
 
     [ForeignKey("CurrencyId")]
     [InverseProperty("InvoiceIncomes")]
