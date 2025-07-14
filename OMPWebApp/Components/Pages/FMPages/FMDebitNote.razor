@@ -1,0 +1,146 @@
+﻿@page "/fm_debitnote"
+
+@using ClassLibrary.DTO;
+@using OMPWebApp.Services;
+
+@inject ApiConnectionService<DebitNoteDTO> ApiServiceDebit
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+@inject AuthorizationService AuthService
+
+<RadzenCard>
+    <h4>Add New Debit Note</h4>
+
+    <RadzenTemplateForm Data="@newDebitNote" TItem="DebitNoteDTO" Submit="@AddDebitNote">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <RadzenTextBox @bind-Value="newDebitNote.Title" Placeholder="Title" Style="width: 100%;" />
+            </div>
+            <div class="col-md-6">
+                <RadzenTextBox @bind-Value="newDebitNote.Description" Placeholder="Description" Style="width: 100%;" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <RadzenNumeric TValue="decimal" @bind-Value="newDebitNote.Value" Placeholder="Value" Style="width: 100%;" />
+            </div>
+            <div class="col-md-4">
+                <RadzenDropDown TValue="int?" @bind-Value="newDebitNote.CurrencyId"
+                Data="@currencies"
+                TextProperty="Code"
+                ValueProperty="Id"
+                Placeholder="Currency"
+                Style="width: 100%;" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2">
+                <RadzenButton Text="@(isEditMode ? "Edit Debit Note" : "Add Debit Note")"
+                ButtonStyle="ButtonStyle.Primary"
+                Type="Submit" />
+            </div>
+            @if (isEditMode)
+            {
+                <div class="col-md-2">
+                    <RadzenButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Warning"
+                    Click="@CancelEdit" />
+                </div>
+            }
+        </div>
+    </RadzenTemplateForm>
+</RadzenCard>
+
+<RadzenCard Style="margin-top: 50px">
+    <h3>Debit Notes</h3>
+
+    <RadzenDataGrid TItem="DebitNoteDTO" Data="@debitNotes" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="DebitNoteDTO" Property="Title" Title="Title" />
+            <RadzenDataGridColumn TItem="DebitNoteDTO" Property="Description" Title="Description" />
+            <RadzenDataGridColumn TItem="DebitNoteDTO" Property="Value" Title="Value" />
+            <RadzenDataGridColumn TItem="DebitNoteDTO" Property="CurrencyNavigation.Code" Title="Currency" />
+            <RadzenDataGridColumn Width="50px" TItem="DebitNoteDTO" Filterable="false" Title="">
+                <Template Context="ct">
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                    Click="@(args => EditDebitNote(ct))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Width="50px" TItem="DebitNoteDTO" Filterable="false" Title="">
+                <Template Context="ct">
+                    <RadzenButton Icon="delete" Size="ButtonSize.Small"
+                    Click="@(args => DeleteDebitNote(ct))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<DebitNoteDTO> debitNotes = new();
+    private List<CurrencyDTO> currencies = new();
+    private DebitNoteDTO newDebitNote = new();
+    private bool isEditMode = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+        await LoadData();
+        InitNewDebitNote();
+    }
+
+    private async Task LoadData()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        debitNotes = await ApiServiceDebit.GetResources($"/api/DebitNote/GetAll/{AuthService.userDTO.CustomerId}");
+    }
+
+    private void InitNewDebitNote()
+    {
+        newDebitNote = new DebitNoteDTO
+            {
+                CustomerId = AuthService.userDTO.CustomerId,
+                CreationDate = DateTime.Now,
+                Currency = "0"
+            };
+    }
+
+    private async Task AddDebitNote()
+    {
+        if (newDebitNote.Id > 0)
+        {
+            newDebitNote.EditDate = DateTime.Now;
+            await ApiServiceDebit.PutResource("/api/DebitNote/Update", newDebitNote);
+        }
+        else
+        {
+            await ApiServiceDebit.PostResource("/api/DebitNote/Create", newDebitNote);
+        }
+
+        InitNewDebitNote();
+        await LoadData();
+        isEditMode = false;
+    }
+
+    private void EditDebitNote(DebitNoteDTO note)
+    {
+        newDebitNote = note;
+        isEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        InitNewDebitNote();
+        isEditMode = false;
+    }
+
+    private async Task DeleteDebitNote(DebitNoteDTO note)
+    {
+        await ApiServiceDebit.DeleteResource($"/api/DebitNote/Delete/{note.Id}");
+        await LoadData();
+    }
+}

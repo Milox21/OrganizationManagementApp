@@ -1,0 +1,271 @@
+﻿@page "/fm_summary"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject ApiConnectionService<FMSummaryDTO> ApiServiceSummary
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+@inject AuthorizationService AuthService
+@inject DialogService DialogService
+
+<RadzenCard>
+    <h3>Financial Summary</h3>
+
+    <!-- Summary Overview -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <RadzenCard Style="background-color: #d4edda; border: 1px solid #c3e6cb;">
+                <h5 class="text-success">Total Income</h5>
+                <h3 class="text-success">@($"{totalIncomeBrutto:N2} {selectedCurrency?.Code}")</h3>
+            </RadzenCard>
+        </div>
+        <div class="col-md-4">
+            <RadzenCard Style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
+                <h5 class="text-danger">Total Cost & Payroll</h5>
+                <h3 class="text-danger">@($"{totalCostAndPayrollBrutto:N2} {selectedCurrency?.Code}")</h3>
+            </RadzenCard>
+        </div>
+        <div class="col-md-4">
+            @if(balance>0)
+            {
+                <RadzenCard Style="background-color: #d4edda; border: 1px solid #c3e6cb);">
+                    <h5 class="@(balance >= 0 ? "text-success" : "text-danger")">Balance</h5>
+                    <h3 class="@(balance >= 0 ? "text-success" : "text-danger")">@($"{balance:N2} {selectedCurrency?.Code}")</h3>
+                </RadzenCard>
+            } 
+            else 
+            {
+                <RadzenCard Style="background-color: #f8d7da; border: 1px solid #f5c6cb);">
+                    <h5 class="@(balance >= 0 ? "text-success" : "text-danger")">Balance</h5>
+                    <h3 class="@(balance >= 0 ? "text-success" : "text-danger")">@($"{balance:N2} {selectedCurrency?.Code}")</h3>
+                </RadzenCard>
+            }
+
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <RadzenCard Style="margin-bottom: 20px;">
+        <h5>Filters</h5>
+        <div class="row mb-3">
+            <div class="col-md-2">
+                <RadzenLabel Text="Display Currency" />
+                <RadzenDropDown @bind-Value="selectedCurrencyCode"
+                Data="@currencies"
+                TextProperty="Code"
+                ValueProperty="Code"
+                Style="width: 100%;"
+                Change="@OnCurrencyChanged" />
+            </div>
+            <div class="col-md-3">
+                <RadzenLabel Text="Start Date" />
+                <RadzenDatePicker @bind-Value="startDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenLabel Text="End Date" />
+                <RadzenDatePicker @bind-Value="endDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+            </div>
+
+
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <RadzenLabel Text="Type Filter" />
+                <RadzenCheckBoxList @bind-Value="selectedTypes"
+                Data="@availableTypes"
+                TextProperty="Text"
+                ValueProperty="Value"
+                Style="width: 100%;" />
+            </div>
+        </div>
+
+
+        <div class="row mb-3">
+            <div class="col-md-2 d-flex align-items-end">
+                <RadzenButton Text="Search"
+                ButtonStyle="ButtonStyle.Primary"
+                Click="@LoadSummaryData"
+                Style="width: 100%;" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end justify-content-end">
+                <RadzenButton Icon="assessment" Text="Combined Chart" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@OpenSingleLineDialog" />
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end justify-content-end">
+                <RadzenButton Icon="assessment" Text="Differentiated Chart" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@OpenMultiLineDialog" />
+            </div>
+        </div>
+    </RadzenCard>
+</RadzenCard>
+
+<RadzenCard Style="margin-top: 20px;">
+    <h4>Detailed Summary</h4>
+
+    <RadzenDataGrid TItem="FMSummaryDTO" Data="@filteredSummaryData" AllowPaging="true" AllowFiltering="true" FilterMode="FilterMode.CheckBoxList" PageSize="15" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Type"  Title="Type" Width="100px">
+                <Template Context="item">
+                    <RadzenBadge BadgeStyle="@GetBadgeStyle(item.Type)" Text="@item.Type" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Title" Title="Title" Width="200px"/>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Occurance" Title="Occurance" Width="100px" />
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Netto" Title="Netto" Width="120px"/>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Tax" Title="Tax %" Width="100px"/>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="TaxValue" Title="Tax Value" Width="120px"/>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Brutto" Title="Brutto" Width="120px"/>
+            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="CreationDate" Title="Creation Date" Width="120px" />
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<CurrencyDTO> currencies = new();
+    private string selectedCurrencyCode = "USD"; // default
+    private CurrencyDTO? selectedCurrency;
+
+    private List<FMSummaryDTO> summaryData = new();
+    private List<FMSummaryDTO> filteredSummaryData = new();
+    private DateTime startDate = DateTime.Now.AddMonths(-6);
+    private DateTime endDate = DateTime.Now.AddMonths(6);
+    private decimal totalIncomeBrutto = 0;
+    private decimal totalCostAndPayrollBrutto = 0;
+    private decimal balance = 0;
+
+    private IEnumerable<string> selectedTypes = new List<string> { "Income", "Cost", "Payroll", "Debit Note" };
+
+    private List<TypeOption> availableTypes = new()
+    {
+        new TypeOption { Text = "Income", Value = "Income" },
+        new TypeOption { Text = "Cost", Value = "Cost" },
+        new TypeOption { Text = "Payroll", Value = "Payroll" },
+        new TypeOption { Text = "Debit Note", Value = "Debit Note" }
+    };
+
+    public class TypeOption
+    {
+        public string Text { get; set; } = string.Empty;
+        public string Value { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        selectedCurrency = currencies.FirstOrDefault(c => c.Code == selectedCurrencyCode);
+        await LoadSummaryData();
+    }
+
+    private async Task LoadSummaryData()
+    {
+        try
+        {
+            summaryData = await ApiServiceSummary.GetResources($"/api/FMSummary/GetAll/{AuthService.userDTO.CustomerId}/{startDate:yyyy-MM-dd}/{endDate:yyyy-MM-dd}");
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading summary data: {ex.Message}");
+        }
+    }
+
+    private void OnCurrencyChanged(object value)
+    {
+        selectedCurrencyCode = value?.ToString() ?? "USD";
+        selectedCurrency = currencies.FirstOrDefault(c => c.Code == selectedCurrencyCode);
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        filteredSummaryData = summaryData
+            .Where(s => selectedTypes.Contains(s.Type))
+            .ToList();
+
+        // Calculate summary totals
+        totalIncomeBrutto = filteredSummaryData
+        .Where(s => s.Type == "Income")
+        .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
+
+        var totalCost = filteredSummaryData
+            .Where(s => s.Type == "Cost")
+            .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
+
+        var totalPayroll = filteredSummaryData
+            .Where(s => s.Type == "Payroll")
+            .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
+
+        var totalDebetNotes = filteredSummaryData
+        .Where(s => s.Type == "Debit Note")
+        .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
+
+        totalCostAndPayrollBrutto = totalCost + totalPayroll;
+        balance = totalIncomeBrutto - totalCostAndPayrollBrutto + totalDebetNotes;
+    }
+
+    private BadgeStyle GetBadgeStyle(string type)
+    {
+        return type switch
+        {
+            "Income" => BadgeStyle.Success,
+            "Cost" => BadgeStyle.Danger,
+            "Payroll" => BadgeStyle.Warning,
+            "Debit Note" => BadgeStyle.Info,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private decimal ConvertCurrency(decimal amount, int? fromCurrencyId)
+    {
+        var fromCurrency = currencies.FirstOrDefault(c => c.Id == fromCurrencyId);
+        if (fromCurrency == null || selectedCurrency == null)
+            return amount; // fallback if data missing
+
+        if (fromCurrency.Id == selectedCurrency.Id)
+            return amount;
+
+        // Convert to USD, then to target currency
+        decimal valueInDollar = amount / fromCurrency.ExchangeRateToDollar;
+        decimal converted = valueInDollar * selectedCurrency.ExchangeRateToDollar;
+
+        return Math.Round(converted, 2, MidpointRounding.AwayFromZero);
+    }
+
+
+    private async void OpenSingleLineDialog()
+    {
+        await DialogService.OpenAsync<SummarySingleLineChartDialog>("Single Line Chart",
+            new Dictionary<string, object>()
+                    {
+            { "SummaryItems", filteredSummaryData }
+                    },
+            new DialogOptions()
+                {
+                    Width = "900px",
+                    Height = "700px"
+                });
+    }
+
+    private async void OpenMultiLineDialog()
+    {
+
+        var Incomes = summaryData.Where(s => s.Type == "Income").ToList();
+        var Costs = summaryData.Where(s => s.Type == "Cost").ToList();
+        var Payrolls = summaryData.Where(s => s.Type == "Payroll").ToList();
+        var DebitNotes = summaryData.Where(s => s.Type == "Debit Note").ToList();
+        await DialogService.OpenAsync<SummaryMultiLineChartDialog>("Multi Line Chart",
+            new Dictionary<string, object>()
+                        {
+                    ["Incomes"] = Incomes,
+                    ["Costs"] = Costs,
+                    ["Payrolls"] = Payrolls,
+                    ["DebitNotes"] = DebitNotes
+                        },
+            new DialogOptions()
+                {
+                    Width = "900px",
+                    Height = "700px"
+                });
+    }
+}

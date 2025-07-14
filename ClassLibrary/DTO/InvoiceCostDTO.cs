@@ -1,29 +1,57 @@
-﻿using ClassLibrary.Models.ModelInterfaces;
+﻿using System.Text.Json.Serialization;
+using ClassLibrary.Models.ModelInterfaces;
 
 namespace ClassLibrary.DTO
 {
     public class InvoiceCostDTO : IBaseModel
     {
+        [JsonPropertyName("id")]
         public int Id { get; set; }
+
+        [JsonPropertyName("name")]
         public string Name { get; set; } = null!;
+
+        [JsonPropertyName("unit")]
         public string Unit { get; set; } = null!;
+
+        [JsonPropertyName("quantity")]
         public decimal Quantity { get; set; }
+
+        [JsonPropertyName("priceNetto")]
         public decimal PriceNetto { get; set; }
+
+        [JsonPropertyName("valueNetto")]
         public decimal ValueNetto { get; set; }
+
+        [JsonPropertyName("vatTax")]
         public int? VatTax { get; set; }
+
+        [JsonPropertyName("vatTaxValue")]
         public decimal? VatTaxValue { get; set; }
+
+        [JsonPropertyName("valueBrutto")]
         public decimal? ValueBrutto { get; set; }
+
+        [JsonPropertyName("customerId")]
         public int CustomerId { get; set; }
+
+        [JsonPropertyName("currencyId")]
         public int? CurrencyId { get; set; }
+
+        [JsonPropertyName("creationDate")]
         public DateTime CreationDate { get; set; }
+
+        [JsonPropertyName("editDate")]
         public DateTime? EditDate { get; set; }
+
+        [JsonPropertyName("deleteDate")]
         public DateTime? DeleteDate { get; set; }
+
+        [JsonPropertyName("vatTaxRate")]
         public decimal? VatTaxRate { get; set; }
+
+        [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
-        public virtual CurrencyDTO? Currency { get; set; }
-        public virtual CustomerDTO Customer { get; set; } = null!;
-        public virtual ICollection<ReccuringCostInvoiceDTO> ReccuringCostInvoices { get; set; } = new List<ReccuringCostInvoiceDTO>();
-        public virtual InvoiceTaxRateDTO? VatTaxNavigation { get; set; }
 
 
         public string? CurrencyCode { get; set; }

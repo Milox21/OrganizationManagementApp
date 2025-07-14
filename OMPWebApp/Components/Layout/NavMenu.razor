@@ -87,7 +87,7 @@
             @if (modules.Any(m => m.Id == 1))
             {
                 <RadzenPanelMenuItem Text="@modules.Where(m => m.Id == 1).FirstOrDefault().Name" Icon="dashboard" >
-                    <RadzenPanelMenuItem Text="Financial Constants" Icon="dashboard">
+                    <RadzenPanelMenuItem Text="Financial Constants" Icon="dashboard" class="PMIinide">
                         <NavLink style="text-decoration: none;" href="fm_tax_rates" Match="NavLinkMatch.All">
                             <RadzenPanelMenuItem Text="Tax Rates" Icon="pageview" />
                         </NavLink>
@@ -101,15 +101,27 @@
                         </NavLink>
                     </RadzenPanelMenuItem>
 
-                    <RadzenPanelMenuItem Text="Invoices & Payroll" Icon="dashboard">
+                    <RadzenPanelMenuItem Text="Invoices, Debit Notes & Payroll" Icon="dashboard">
                         <NavLink style="text-decoration: none;" href="fm_invoiceincome" Match="NavLinkMatch.All">
                             <RadzenPanelMenuItem Text="Income Invoice" Icon="pageview" />
                         </NavLink>
 
                         <NavLink style="text-decoration: none;" href="fm_invoicecost" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Income Cost" Icon="pageview" />
+                            <RadzenPanelMenuItem Text="Cost Invoice " Icon="pageview" />
+                        </NavLink>
+
+                        <NavLink style="text-decoration: none;" href="fm_payroll" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Payroll" Icon="pageview" />
+                        </NavLink>
+
+                        <NavLink style="text-decoration: none;" href="fm_debitnote" Match="NavLinkMatch.All">
+                            <RadzenPanelMenuItem Text="Debit Note" Icon="pageview" />
                         </NavLink>
                     </RadzenPanelMenuItem>
+
+                    <NavLink style="text-decoration: none;" href="fm_summary" Match="NavLinkMatch.All">
+                        <RadzenPanelMenuItem Text="Summary" Icon="pageview" />
+                    </NavLink>
                 </RadzenPanelMenuItem>
             }
         </div>
@@ -171,6 +183,10 @@
 </Popup>
 
 <style>
+    .PMIinide .rz-navigation-item-link .rz-navigation-item-text {
+       
+    }
+
     .notification-title-unread {
     font-weight: bold;
     }

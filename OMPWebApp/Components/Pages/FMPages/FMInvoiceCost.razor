@@ -8,7 +8,7 @@
 @inject ApiConnectionService<InvoiceTaxRateDTO> ApiServiceTax
 @inject AuthorizationService AuthService
 <RadzenCard>
-    <h4>Add New Invoice Income</h4>
+    <h4>Add New Invoice (Cost)</h4>
 
     <RadzenTemplateForm Data="@newCost" TItem="InvoiceCostDTO" Submit="@AddInvoiceCost">
 
@@ -30,33 +30,44 @@
             </div>
             <div class="col-md-3">
                 <RadzenDropDown TValue="decimal?" @bind-Value="newCost.VatTaxRate"
-                                Data="@vatDropdownItems"
-                                TextProperty="Display"
-                                ValueProperty="Rate"
-                                Placeholder="VAT %"
-                                Style="width: 100%;" />
+                Data="@vatDropdownItems"
+                TextProperty="Display"
+                ValueProperty="Rate"
+                Placeholder="VAT %"
+                Style="width: 100%;" />
             </div>
             <div class="col-md-3">
                 <RadzenDropDown TValue="int?" @bind-Value="newCost.CurrencyId"
-                                Data="@currencies"
-                                TextProperty="Code"
-                                ValueProperty="Id"
-                                Placeholder="Currency"
-                                Style="width: 100%;" />
+                Data="@currencies"
+                TextProperty="Code"
+                ValueProperty="Id"
+                Placeholder="Currency"
+                Style="width: 100%;" />
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-12">
-                <RadzenButton Text="Add Invoice" ButtonStyle="ButtonStyle.Primary" Type="Submit" />
+            <div class="col-md-2">
+                <RadzenButton Text="@(isEditMode ? "Edit Invoice" : "Add Invoice")"
+                ButtonStyle="ButtonStyle.Primary"
+                Type="Submit" />
             </div>
+            @if (isEditMode)
+            {
+                <div class="col-md-1">
+                    <RadzenButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Warning"
+                    Click="@CancelEdit" />
+                </div>
+            }
         </div>
+
 
     </RadzenTemplateForm>
 </RadzenCard>
 
 <RadzenCard Style="margin-top: 50px">
-    <h3>Invoice Income</h3>
+    <h3>Invoice (Cost)</h3>
 
     <RadzenDataGrid TItem="InvoiceCostDTO" Data="@invoiceCosts" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
         <Columns>
@@ -69,6 +80,30 @@
             <RadzenDataGridColumn TItem="InvoiceCostDTO" Property="VatTaxValue" Title="VAT Value" />
             <RadzenDataGridColumn TItem="InvoiceCostDTO" Property="ValueBrutto" Title="Brutto" />
             <RadzenDataGridColumn TItem="InvoiceCostDTO" Property="CurrencyCode" Title="Currency" />
+            <RadzenDataGridColumn Width="50px" TItem="InvoiceCostDTO"  Filterable="false" Title="">
+                <Template Context="ct">
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                    Click="@(args => EditInvoice(ct))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Width="50px" TItem="InvoiceCostDTO" Filterable="false" Title="">
+                <Template Context="ct">
+                    <RadzenButton Icon="delete" Size="ButtonSize.Small"
+                    Click="@(args => DeleteInvoice(ct))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Width="50px" TItem="InvoiceCostDTO" Filterable="false" Title="">
+                <Template Context="ct">
+                    <RadzenButton Icon="repeat" Size="ButtonSize.Small"
+                    Click="@(args => MakeRecurring(ct))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+
         </Columns>
     </RadzenDataGrid>
 </RadzenCard>
@@ -79,6 +114,8 @@
     private List<InvoiceTaxRateDTO> vatTaxRates = new();
     private List<int?> vatTaxValues = new();
     private InvoiceCostDTO newCost = new();
+
+    private bool isEditMode = false;
 
     private List<VatDropdownItem> vatDropdownItems => vatTaxRates
     .Select(x => new VatDropdownItem
@@ -123,27 +160,58 @@
     }
     private async Task AddInvoiceCost()
     {
-        // Retrieve VAT percentage from selected ID
         decimal selectedVatRate = (decimal)newCost.VatTaxRate;
 
-        // Ensure Quantity and Price are valid
-        if (newCost.Quantity > 0 && newCost.PriceNetto > 0)
+        if (newCost.Id > 0)
         {
             newCost.ValueNetto = newCost.Quantity * newCost.PriceNetto;
-
-            // Calculate VAT value and Brutto
             newCost.VatTaxValue = newCost.ValueNetto * (newCost.VatTaxRate / 100);
             newCost.ValueBrutto = newCost.ValueNetto + newCost.VatTaxValue;
+
+            await ApiServiceInvoice.PutResource("/api/InvoiceCost/Update", newCost);
+ 
         }
         else
         {
-            newCost.ValueNetto = 0;
-            newCost.VatTaxRate = 0;
-            newCost.ValueBrutto = 0;
-        }
+            if (newCost.Quantity > 0 && newCost.PriceNetto > 0)
+            {
+                newCost.ValueNetto = newCost.Quantity * newCost.PriceNetto;
+                newCost.VatTaxValue = newCost.ValueNetto * (newCost.VatTaxRate / 100);
+                newCost.ValueBrutto = newCost.ValueNetto + newCost.VatTaxValue;
+            }
+            else
+            {
+                newCost.ValueNetto = 0;
+                newCost.VatTaxRate = 0;
+                newCost.ValueBrutto = 0;
+            }
 
-        await ApiServiceInvoice.PostResource("/api/InvoiceIncome/Create", newCost);
+            await ApiServiceInvoice.PostResource("/api/InvoiceCost/Create", newCost);
+        }
         InitNewCost();
         await LoadData();
+    }
+
+    private void EditInvoice(InvoiceCostDTO cost)
+    {
+        newCost = cost;
+        isEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        InitNewCost(); // lub stwórz nowy obiekt InvoiceIncomeDTO
+        isEditMode = false;
+    }
+    private async Task DeleteInvoice(InvoiceCostDTO cost)
+    {
+        await ApiServiceInvoice.DeleteResource($"/api/InvoiceCost/Delete/{cost.Id}");
+        await LoadData();
+    }
+
+    private void MakeRecurring(InvoiceCostDTO cost)
+    {
+        // Tu dodaj logikę do oznaczenia faktury jako cyklicznej (lub przekierowanie itp.)
+        Console.WriteLine($"Make recurring for: {cost.Name}");
     }
 }

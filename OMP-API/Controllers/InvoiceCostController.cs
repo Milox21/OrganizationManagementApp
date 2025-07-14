@@ -3,32 +3,27 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OMP_API.Models;
 using OMP_API.Models.Contexts;
-using OMP_API.Services;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace OMP_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class InvoiceIncomeController : BaseController<InvoiceIncomeDTO>
+    public class InvoiceCostController : BaseController<InvoiceCostDTO>
     {
         private readonly DatabaseContext _context;
-        public InvoiceIncomeController(DatabaseContext context)
+        public InvoiceCostController(DatabaseContext context)
         {
             _context = context;
         }
 
-        // GET: api/InvoiceIncome/GetAll/{customerId}
         [HttpGet("GetAll/{customerId}")]
-        public async Task<ActionResult<IEnumerable<InvoiceIncomeDTO>>> GetAll(int customerId)
+        public async Task<ActionResult<IEnumerable<InvoiceCostDTO>>> GetAll(int customerId)
         {
-            var items = await _context.InvoiceIncomes
+            var items = await _context.InvoiceCosts
                 .Where(i => i.CustomerId == customerId && !i.IsDeleted)
                 .OrderBy(i => i.CreationDate)
-                .Select(i => new InvoiceIncomeDTO
+                .Select(i => new InvoiceCostDTO
                 {
                     Id = i.Id,
                     Name = i.Name,
@@ -51,11 +46,10 @@ namespace OMP_API.Controllers
             return Ok(items);
         }
 
-        // POST: api/InvoiceIncome/Create
         [HttpPost("Create")]
-        public async Task<IActionResult> Create([FromBody] InvoiceIncomeDTO dto)
+        public async Task<IActionResult> Create([FromBody] InvoiceCostDTO dto)
         {
-            var entity = new InvoiceIncome
+            var entity = new InvoiceCost
             {
                 Name = dto.Name,
                 Unit = dto.Unit,
@@ -70,16 +64,15 @@ namespace OMP_API.Controllers
                 CreationDate = DateTime.UtcNow,
                 IsDeleted = false
             };
-            _context.InvoiceIncomes.Add(entity);
+            _context.InvoiceCosts.Add(entity);
             await _context.SaveChangesAsync();
             return Ok();
         }
 
-        // PUT: api/InvoiceIncome/Update/{id}
         [HttpPut("Update")]
-        public async Task<IActionResult> Update([FromBody] InvoiceIncomeDTO dto)
+        public async Task<IActionResult> Update( [FromBody] InvoiceCostDTO dto)
         {
-            var entity = await _context.InvoiceIncomes.FindAsync(dto.Id);
+            var entity = await _context.InvoiceCosts.FindAsync(dto.Id);
             if (entity == null || entity.IsDeleted) return NotFound();
 
             entity.Name = dto.Name;
@@ -88,7 +81,7 @@ namespace OMP_API.Controllers
             entity.PriceNetto = dto.PriceNetto;
             entity.CurrencyId = dto.CurrencyId;
             entity.VatTaxRate = dto.VatTaxRate;
-            entity.VatTaxRate = dto.VatTaxRate ;
+            entity.VatTaxRate = dto.VatTaxRate;
             entity.VatTaxValue = dto.VatTaxValue;
             entity.ValueBrutto = dto.ValueBrutto;
             entity.EditDate = DateTime.UtcNow;
@@ -97,11 +90,10 @@ namespace OMP_API.Controllers
             return NoContent();
         }
 
-        // DELETE: api/InvoiceIncome/Delete/{id}
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var entity = await _context.InvoiceIncomes.FindAsync(id);
+            var entity = await _context.InvoiceCosts.FindAsync(id);
             if (entity == null || entity.IsDeleted) return NotFound();
 
             entity.IsDeleted = true;

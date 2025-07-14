@@ -1,0 +1,191 @@
+﻿@page "/fm_payroll"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject ApiConnectionService<PayrollDTO> ApiServicePayroll
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+@inject ApiConnectionService<PayrollTaxRateDTO> ApiServicePayrollTax
+@inject ApiConnectionService<ContractTypeDTO> ApiServiceContractType
+@inject AuthorizationService AuthService
+
+<RadzenCard>
+    <h4>Add New Payroll Entry</h4>
+
+    <RadzenTemplateForm Data="@newPayroll" TItem="PayrollDTO" Submit="@AddPayroll">
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <RadzenTextBox @bind-Value="newPayroll.Name" Placeholder="First Name" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenTextBox @bind-Value="newPayroll.Surname" Placeholder="Last Name" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenNumeric TValue="decimal" @bind-Value="newPayroll.RatePerHourBrutto" Placeholder="Hourly Rate (Brutto)" Style="width: 100%;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenNumeric TValue="decimal" @bind-Value="newPayroll.Hours" Placeholder="Hours Worked" Style="width: 100%;" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <RadzenDropDown TValue="int" @bind-Value="newPayroll.ContractType"
+                Data="@ctypes"
+                TextProperty="Title"
+                ValueProperty="Id"
+                Placeholder="Contract Type"
+                Style="width: 100%;" />
+            </div>
+
+            <div class="col-md-3">
+                <RadzenDropDown TValue="int?" @bind-Value="newPayroll.CurrencyId"
+                Data="@currencies"
+                TextProperty="Code"
+                ValueProperty="Id"
+                Placeholder="Currency"
+                Style="width: 100%;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenDropDown TValue="decimal" @bind-Value="newPayroll.TaxRate"
+                                Data="@vatDropdownItems"
+                                TextProperty="Display"
+                ValueProperty="Rate"
+                Placeholder="Tax Rate"
+                Style="width: 100%;" />
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-2">
+                <RadzenButton Text="@(isEditMode ? "Edit Payroll" : "Add Payroll")"
+                ButtonStyle="ButtonStyle.Primary"
+                Type="Submit" />
+            </div>
+            @if (isEditMode)
+            {
+                <div class="col-md-1">
+                    <RadzenButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Warning"
+                    Click="@CancelEdit" />
+                </div>
+            }
+        </div>
+    </RadzenTemplateForm>
+</RadzenCard>
+
+<RadzenCard Style="margin-top: 50px">
+    <h3>Payroll Records</h3>
+
+    <RadzenDataGrid TItem="PayrollDTO" Data="@payrolls" AllowPaging="true" AllowFiltering="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="Name" Title="First Name" />
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="Surname" Title="Last Name" />
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="RatePerHourBrutto" Title="Hourly Rate" />
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="Hours" Title="Hours" />
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="Currency.Code" Title="Currency" />
+            <RadzenDataGridColumn TItem="PayrollDTO" Property="PayrollTaxRateIds" Title="Tax (%)" />
+
+            <RadzenDataGridColumn Width="50px" TItem="PayrollDTO" Filterable="false" Title="">
+                <Template Context="pr">
+                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                    Click="@(args => EditPayroll(pr))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+
+            <RadzenDataGridColumn Width="50px" TItem="PayrollDTO" Filterable="false" Title="">
+                <Template Context="pr">
+                    <RadzenButton Icon="delete" Size="ButtonSize.Small"
+                    Click="@(args => DeletePayroll(pr))"
+                    Style="margin-right: 0.5rem;" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<PayrollDTO> payrolls = new();
+    private List<CurrencyDTO> currencies = new();
+
+    private List<PayrollTaxRateDTO> taxrates = new();
+    private List<ContractTypeDTO> ctypes = new();
+
+    private PayrollDTO newPayroll = new();
+    private bool isEditMode = false;
+
+    private List<VatDropdownItem> vatDropdownItems => taxrates
+    .Select(x => new VatDropdownItem
+    {
+        Id = x.Id,
+        Display = $"{x.Title} ({Math.Round(x.Rate, 2)}%)",
+        Rate = x.Rate
+    }).ToList();
+
+    public class VatDropdownItem
+    {
+        public int Id { get; set; }
+        public string Display { get; set; } = string.Empty;
+        public decimal Rate { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        InitNewPayroll();
+    }
+
+    private async Task LoadData()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        payrolls = await ApiServicePayroll.GetResources($"/api/Payroll/GetAll/{AuthService.userDTO.CustomerId}");
+        taxrates = await ApiServicePayrollTax.GetResources($"/api/Tax/GetPayrollTaxRates/{AuthService.userDTO.CustomerId}");
+        ctypes = await ApiServiceContractType.GetResources($"/api/Contracts/GetByCustomer/{AuthService.userDTO.CustomerId}");
+
+    }
+
+    private void InitNewPayroll()
+    {
+        newPayroll = new PayrollDTO
+            {
+                CustomerId = AuthService.userDTO.CustomerId,
+                CreationDate = DateTime.Now
+            };
+    }
+
+    private async Task AddPayroll()
+    {
+        if (newPayroll.Id > 0)
+        {
+            newPayroll.Currency = null;
+            newPayroll.ContractTypeNavigation = null;
+            await ApiServicePayroll.PutResource("/api/Payroll/Update", newPayroll);
+        }
+        else
+        {
+            await ApiServicePayroll.PostResource("/api/Payroll/Create", newPayroll);
+        }
+
+        InitNewPayroll();
+        await LoadData();
+    }
+
+    private void EditPayroll(PayrollDTO payroll)
+    {
+        newPayroll = payroll;
+        isEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        InitNewPayroll();
+        isEditMode = false;
+    }
+
+    private async Task DeletePayroll(PayrollDTO payroll)
+    {
+        await ApiServicePayroll.DeleteResource($"/api/Payroll/Delete/{payroll.Id}");
+        await LoadData();
+    }
+}

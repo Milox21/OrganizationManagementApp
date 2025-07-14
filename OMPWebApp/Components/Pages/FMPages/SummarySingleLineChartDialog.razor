@@ -1,0 +1,102 @@
+﻿@page "/summary-chart"
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@inject NavigationManager NavManager
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+
+<RadzenCard>
+    <h3>Monthly Financial Chart</h3>
+
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <RadzenLabel Text="Display Currency" />
+            <RadzenDropDown @bind-Value="selectedCurrencyCode"
+                            Data="@currencies"
+                            TextProperty="Code"
+                            ValueProperty="Code"
+                            Style="width: 100%;"
+                            Change="@OnCurrencyChanged" />
+        </div>
+    </div>
+
+    <RadzenChart Style="height: 400px;">
+        <RadzenLineSeries Data="@ChartData" CategoryProperty="MonthLabel" ValueProperty="TotalNetto" Title="Netto" LineType="LineType.Solid" >
+            <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" />
+        </RadzenLineSeries>
+        <RadzenLineSeries Data="@ChartData" CategoryProperty="MonthLabel" ValueProperty="TotalBrutto" Title="Brutto" LineType="LineType.Dashed">
+            <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" />
+        </RadzenLineSeries>
+
+        <RadzenCategoryAxis>
+            <RadzenAxisTitle Text="Month"></RadzenAxisTitle>
+        </RadzenCategoryAxis>
+        <RadzenValueAxis>
+            <RadzenAxisTitle Text="@selectedCurrency?.Code"></RadzenAxisTitle>
+            <RadzenGridLines Visible="true" />
+        </RadzenValueAxis>
+    </RadzenChart>
+</RadzenCard>
+
+@code {
+    [Parameter] public List<FMSummaryDTO> SummaryItems { get; set; } = new();
+    private List<MonthlySummary> ChartData = new();
+
+    private List<CurrencyDTO> currencies = new();
+    private string selectedCurrencyCode = "USD";
+    private CurrencyDTO? selectedCurrency;
+
+    bool showMarkers = true;
+    public class MonthlySummary
+    {
+        public string MonthLabel { get; set; } = "";
+        public decimal TotalNetto { get; set; }
+        public decimal TotalBrutto { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        selectedCurrency = currencies.FirstOrDefault(c => c.Code == selectedCurrencyCode);
+        CalculateChartData();
+    }
+
+    private void OnCurrencyChanged(object value)
+    {
+        selectedCurrencyCode = value?.ToString() ?? "USD";
+        selectedCurrency = currencies.FirstOrDefault(c => c.Code == selectedCurrencyCode);
+        CalculateChartData();
+    }
+
+    private void CalculateChartData()
+    {
+        ChartData = SummaryItems
+            .Where(x => x.CreationDate != null)
+            .GroupBy(x => new { x.CreationDate!.Value.Year, x.CreationDate!.Value.Month })
+            .Select(g =>
+            {
+                var month = new DateTime(g.Key.Year, g.Key.Month, 1);
+                return new MonthlySummary
+                    {
+                        MonthLabel = month.ToString("MMM yyyy"),
+                        TotalNetto = g.Sum(i => ConvertCurrency(i.Netto ?? 0, i.CurrencyId)),
+                        TotalBrutto = g.Sum(i => ConvertCurrency(i.Brutto ?? 0, i.CurrencyId))
+                    };
+            })
+            .OrderBy(x => DateTime.ParseExact(x.MonthLabel, "MMM yyyy", null))
+            .ToList();
+    }
+
+    private decimal ConvertCurrency(decimal amount, int? fromCurrencyId)
+    {
+        var fromCurrency = currencies.FirstOrDefault(c => c.Id == fromCurrencyId);
+        if (fromCurrency == null || selectedCurrency == null)
+            return amount;
+
+        if (fromCurrency.Id == selectedCurrency.Id)
+            return amount;
+
+        decimal usd = amount / fromCurrency.ExchangeRateToDollar;
+        decimal converted = usd * selectedCurrency.ExchangeRateToDollar;
+        return Math.Round(converted, 2);
+    }
+}
