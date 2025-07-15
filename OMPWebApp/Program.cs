@@ -1,3 +1,4 @@
+using System.Globalization;
 using OMPWebApp.Components;
 using OMPWebApp.Services;
 using Radzen;
@@ -12,6 +13,9 @@ builder.Services.AddSingleton(sp => new HttpClient
 {
 	BaseAddress = new Uri("https://localhost:7070/")
 });
+
+CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
+CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
 
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
@@ -28,7 +32,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
 	app.UseExceptionHandler("/Error", createScopeForErrors: true);
-	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
 	app.UseHsts();
 }
 

@@ -3,6 +3,8 @@
 @using ClassLibrary.DTO
 @using OMPWebApp.Services
 
+@inject IJSRuntime JS
+@inject HttpClient Http
 @inject ApiConnectionService<FMSummaryDTO> ApiServiceSummary
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
 @inject AuthorizationService AuthService
@@ -88,12 +90,20 @@
                 Click="@LoadSummaryData"
                 Style="width: 100%;" />
             </div>
-            <div class="col-md-2 d-flex align-items-end justify-content-end">
-                <RadzenButton Icon="assessment" Text="Combined Chart" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@OpenSingleLineDialog" />
+            <div class="col-md-2 d-flex align-items-end">
+                <RadzenButton Icon="assessment" Text="Combined Chart" ButtonStyle="ButtonStyle.Primary" Style="width: 100%;" Click="@OpenSingleLineDialog" />
             </div>
 
-            <div class="col-md-2 d-flex align-items-end justify-content-end">
-                <RadzenButton Icon="assessment" Text="Differentiated Chart" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" Click="@OpenMultiLineDialog" />
+            <div class="col-md-2 d-flex align-items-end">
+                <RadzenButton Icon="assessment" Text="Diversified  Chart" ButtonStyle="ButtonStyle.Primary" Style="width: 100%;" Click="@OpenMultiLineDialog" />
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <RadzenButton Icon="download"
+                              Text="Create Report"
+                              ButtonStyle="ButtonStyle.Success"
+                              Click="@DownloadPdfAsync"
+                              Style="width: 100%;" />
             </div>
         </div>
     </RadzenCard>
@@ -267,5 +277,38 @@
                     Width = "900px",
                     Height = "700px"
                 });
+    }
+
+    private async Task DownloadPdfAsync()
+    {
+        try
+        {
+            var request = new FMSummaryReportRequestDTO
+                {
+                    CustomerId = AuthService.userDTO.CustomerId,
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Items = filteredSummaryData
+                };
+
+            var response = await Http.PostAsJsonAsync("/api/PDF/download", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                var base64Pdf = Convert.ToBase64String(pdfBytes);
+                var fileName = $"summary-report-{DateTime.Now:yyyyMMddHHmm}.pdf";
+
+                await JS.InvokeVoidAsync("downloadFile", fileName, base64Pdf);
+            }
+            else
+            {
+                Console.WriteLine("Failed to download PDF: " + response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error downloading PDF: " + ex.Message);
+        }
     }
 }

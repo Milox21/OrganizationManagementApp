@@ -3,16 +3,17 @@
 @using ClassLibrary.DTO
 @using OMPWebApp.Services
 @using Radzen
-
+@using Microsoft.AspNetCore.SignalR.Client
 @inject DialogService DialogService
 @inject ApiConnectionService<UserDTO> ApiServiceUser
 @inject ApiConnectionService<TaskDTO> ApiServiceTask
 @inject ApiConnectionService<GroupDTO> ApiServiceGroup
 @inject AuthorizationService AuthService
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
 
 <style>
     .names li {
-        
         padding: 0.5rem 0rem;
         background-color: lightblue;
         padding-left: 10px;
@@ -20,14 +21,22 @@
     }
 
     .tasks li {
-        min-width:400px;
+        min-width: 400px;
     }
 
+    .chat-box {
+        max-height: 400px;
+        overflow-y: auto;
+        background-color: #f9f9f9;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
 </style>
+
 <RadzenCard>
     <h3>@Group.Title</h3>
     <RadzenRow>
-        <!-- First Column - 1/5 of space (Group Members) -->
+        <!-- Members -->
         <RadzenColumn Size="2">
             <h5>Group Members</h5>
             <RadzenDataList class="names" Data="groupMembers" TItem="UserDTO">
@@ -37,29 +46,39 @@
             </RadzenDataList>
         </RadzenColumn>
 
-        <!-- Second Column - 3/5 of space (Chat) -->
+        <!-- Chat -->
         <RadzenColumn Size="6">
-            <h4>Details Section</h4>
-            <p>This section is currently empty. Add content here later.</p>
+            <h4>Group Chat</h4>
+            <div class="chat-box" @ref="chatContainer">
+                @foreach (var msg in messages)
+                {
+                    var sender = groupMembers.FirstOrDefault(u => u.Id == msg.UserID);
+                    <div>
+                        <b>@sender?.Name @sender?.Surname</b>: @msg.Text
+                    </div>
+                }
+            </div>
+
+            <RadzenTextBox @bind-Value="messageText" Style="width:100%" Placeholder="Type a message..." />
+            <RadzenButton Text="Send" Click="SendMessageAsync" Style="margin-top:5px;" />
         </RadzenColumn>
 
-        <!-- Third Column - 1/5 of space (Group Tasks) -->
+        <!-- Tasks -->
         <RadzenColumn Size="2">
-            
             <RadzenRow>
                 <h4>Group Tasks</h4>
                 @if (groupAdmins?.Any(admin => admin.Id == AuthService.userDTO?.Id) == true)
                 {
-                    <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Click=" ()=> AddTask()" />
+                    <RadzenButton Icon="add_circle" ButtonStyle="ButtonStyle.Primary" Click="()=> AddTask()" />
                 }
             </RadzenRow>
 
             <RadzenDataList Data="groupTasks" TItem="TaskDTO" class="tasks">
                 <Template Context="task">
                     <div style="display: flex; flex-direction: column;">
-                        <span>@task.Title <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click=" ()=> SeeDetails(task)" /></span>
-                        <span style="font-size:smaller">Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient).Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient).Surname  </span>
-                        <span style="font-size:smaller">Deadline: @task.DeadlineTime.Day / @task.DeadlineTime.Month  </span>
+                        <span>@task.Title <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click="()=> SeeDetails(task)" /></span>
+                        <span style="font-size:smaller">Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Surname</span>
+                        <span style="font-size:smaller">Deadline: @task.DeadlineTime.Day / @task.DeadlineTime.Month</span>
                     </div>
                 </Template>
             </RadzenDataList>
@@ -68,62 +87,112 @@
 </RadzenCard>
 
 @code {
-    [Parameter] 
+    [Parameter]
     public int GroupId { get; set; }
 
     private GroupDTO Group = new();
     private List<UserDTO>? groupMembers = new();
     private List<TaskDTO>? groupTasks = new();
     private List<UserDTO>? groupAdmins = new();
+    private List<GroupMessageDTO> messages = new();
+
+    private string messageText = string.Empty;
+    private HubConnection? hubConnection;
+    private ElementReference chatContainer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InitializeSignalR(); // Create and configure the SignalR connection ONCE
+    }
+
 
     protected override async Task OnParametersSetAsync()
     {
-        await LoadData();
+        await LoadData();        // reload group and members
+        await LoadMessages();    // reload messages from API
+        await RestartSignalR();  // reconnect to SignalR for this new group
     }
-
 
     private async Task LoadData()
     {
-        Group = new GroupDTO();
-        groupMembers = new List<UserDTO>();
-        groupAdmins = new List<UserDTO>();
-        groupTasks = new List<TaskDTO>();
-
         Group = await ApiServiceGroup.GetResource($"/api/Group/{GroupId}");
+        groupMembers = Group?.Users.ToList() ?? new List<UserDTO>();
+        groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{GroupId}");
+        groupAdmins = await ApiServiceUser.GetResources($"/api/GroupUser/GetAdmins/{GroupId}");
+    }
 
-        if (Group != null)
+    private async Task LoadMessages()
+    {
+        messages = await Http.GetFromJsonAsync<List<GroupMessageDTO>>($"/api/GroupMessage/GetByGroup/{GroupId}") ?? new();
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (string.IsNullOrWhiteSpace(messageText)) return;
+
+        var newMessage = new GroupMessageDTO
+            {
+                Text = messageText,
+                CreationDate = DateTime.UtcNow,
+                GroupID = Group.Id,
+                UserID = AuthService.userDTO!.Id,
+                Group = Group,
+                User = AuthService.userDTO,
+                IsDeleted = false
+            };
+
+        await hubConnection.SendAsync("SendMessage", newMessage);
+    }
+
+    private async Task InitializeSignalR()
+    {
+        if (hubConnection == null)
         {
-            groupMembers = Group.Users.ToList();
-            groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{GroupId}");
-            groupAdmins = await ApiServiceUser.GetResources($"/api/GroupUser/GetAdmins/{GroupId}");
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl($"https://localhost:7243/groupchathub?groupId={GroupId}")
+                .WithAutomaticReconnect()
+                .Build();
+
+            hubConnection.On<GroupMessageDTO>("ReceiveMessage", (message) =>
+            {
+                messages.Add(message);
+                InvokeAsync(StateHasChanged);
+            });
         }
     }
 
+    private async Task RestartSignalR()
+    {
+        if (hubConnection != null && hubConnection.State == HubConnectionState.Connected)
+        {
+            await hubConnection.StopAsync();
+            await hubConnection.DisposeAsync();
+            hubConnection = null;
+        }
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl($"https://localhost:7070/groupchathub?groupId={GroupId}")
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<GroupMessageDTO>("ReceiveMessage", (message) =>
+        {
+            messages.Add(message);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+
     private async void SeeDetails(TaskDTO task)
     {
-        var result = await DialogService.OpenAsync<TaskDialog>("Task",
-       new Dictionary<string, object>()
-                       {
-            {"task", task }
-                       },
-       new DialogOptions()
-           {
-               Width = "700px",
-               Height = "512px"
-           });
+        var result = await DialogService.OpenAsync<TaskDialog>("Task", new Dictionary<string, object> { { "task", task } }, new DialogOptions { Width = "700px", Height = "512px" });
     }
+
     private async void AddTask()
     {
-       var result = await DialogService.OpenAsync<AddTaskDialog>("Add Task",
-       new Dictionary<string, object>()
-                   {
-            {"group", Group }
-                   },
-       new DialogOptions()
-           {
-               Width = "700px",
-               Height = "512px"
-           });
+        var result = await DialogService.OpenAsync<AddTaskDialog>("Add Task", new Dictionary<string, object> { { "group", Group } }, new DialogOptions { Width = "700px", Height = "512px" });
 
         if (result == true)
         {
@@ -132,4 +201,3 @@
         }
     }
 }
-

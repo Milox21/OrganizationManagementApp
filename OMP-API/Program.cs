@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OMP_API.Services;
 using OMP_API.Models.Contexts;
+using QuestPDF.Infrastructure;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +26,11 @@ builder.Services.AddIdentityCore<IdentityUser>()
  .AddEntityFrameworkStores<DatabaseContext>()
  .AddApiEndpoints();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
+
+app.MapHub<GroupChatHub>("/groupchathub");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -48,3 +54,4 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
