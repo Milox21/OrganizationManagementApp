@@ -8,10 +8,11 @@
 @inject AuthorizationService AuthService
 
 <RadzenSplitter Orientation="Orientation.Vertical">
+    <RadzenCard>
     <RadzenSplitterPane Size="50%">
         <h3>Positions</h3>
         <div style="display: flex; gap: 2rem; align-items: flex-start;">
-            <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" PageSize="7" AllowSorting="true">
+                <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true">
                 <Columns>
                     <RadzenDataGridColumn TItem="PositionDTO" Property="Name" Title="Name" />
                     <RadzenDataGridColumn TItem="PositionDTO" Property="Description" Title="Description" />
@@ -30,13 +31,15 @@
             </div>
         </div>
     </RadzenSplitterPane>
+    </RadzenCard>
+    <RadzenCard Style="margin-top: 20px;">
     <RadzenSplitterPane Size="50%">
         <h3>Countries</h3>
         <div style="display: flex; gap: 2rem; align-items: flex-start;">
-            <RadzenDataGrid TItem="CountryDTO" PageSize="7"  Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" AllowSorting="true">
+            <RadzenDataGrid TItem="CountryDTO" PageSize="5"  Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" AllowSorting="true">
                 <Columns>
                     <RadzenDataGridColumn TItem="CountryDTO" Property="Name" Title="Name" />
-                    <RadzenDataGridColumn TItem="CountryDTO" Property="Description" Title="Country" />
+                    <RadzenDataGridColumn TItem="CountryDTO" Property="Description" Title="Continent" />
                 </Columns>
             </RadzenDataGrid>
 
@@ -45,6 +48,7 @@
             </div>
         </div>
     </RadzenSplitterPane>
+    </RadzenCard>
 </RadzenSplitter>
 
 @code

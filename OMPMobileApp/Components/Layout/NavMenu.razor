@@ -1,0 +1,66 @@
+﻿@using OMPMobileApp.Services
+@inject AuthorizationService AuthorizationService
+
+<div class="nav-container">
+    <div class="user-info">
+        Hello, @AuthorizationService.userDTO.Name @AuthorizationService.userDTO.Surname
+    </div>
+
+    <div class="tiles-grid">
+        <NavLink class="tile" href="/calendar">
+            <div class="tile-content">Calendar</div>
+        </NavLink>
+
+        <NavLink class="tile" href="/notifications">
+            <div class="tile-content">Notifications</div>
+        </NavLink>
+
+        <NavLink class="tile" href="/tasks">
+            <div class="tile-content">Tasks</div>
+        </NavLink>
+    </div>
+</div>
+
+<style>
+    .nav-container {
+        padding: 20px;
+        font-family: sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+    }
+
+    .user-info {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .tiles-grid {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .tile {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 120px;
+        background-color: #0078D7;
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        transition: transform 0.2s, background-color 0.3s;
+    }
+
+        .tile:hover {
+            background-color: #005fa3;
+            transform: scale(1.05);
+        }
+
+    .tile-content {
+        font-size: 1.1rem;
+        text-align: center;
+    }
+</style>

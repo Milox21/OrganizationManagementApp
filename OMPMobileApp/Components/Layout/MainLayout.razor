@@ -1,0 +1,92 @@
+﻿@inherits LayoutComponentBase
+
+@using ClassLibrary.DTO
+@using OMPMobileApp.Components.Pages
+@using OMPMobileApp.Services
+@using System.ComponentModel
+@using Radzen
+@using Radzen.Blazor
+
+@inject AuthorizationService AuthorizationService
+@inject ApiConnectionService<CustomerDTO> CustomerService
+
+@implements IDisposable
+
+@if (AuthorizationService.isLogged)
+{
+    <RadzenLayout>
+        <RadzenBody>
+            <div class="rz-p-4">
+                @Body
+            </div>
+        </RadzenBody>
+    </RadzenLayout>
+}
+else
+{
+    <RadzenCard Style="width: 400px; margin: 50px auto; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 8px;">
+        <div class="login-header" style="text-align: center; margin-bottom: 20px;">
+            <RadzenIcon Icon="lock" Style="font-size: 36px; color: #0078D7;" />
+            <h2 style="margin: 10px 0;">Welcome</h2>
+            <p style="color: gray;">OMP</p>
+        </div>
+
+        <RadzenTemplateForm TItem="LoginObject" Data="@loginData" Submit="@LoginMe" Style="padding: 20px; text-align: center;">
+            <RadzenFieldset Legend="Login Data">
+                <RadzenText Style="margin-top: 15px; color: red"> @loginError </RadzenText>
+                <RadzenTextBox @bind-Value="loginData.Username" Placeholder="email" Style="margin-bottom: 15px; margin-top: 15px;" />
+                <RadzenTextBox @bind-Value="loginData.Password" Placeholder="password" Type="password" Style="margin-bottom: 15px;" />
+            </RadzenFieldset>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <RadzenButton Text="Login" ButtonType="ButtonType.Submit" Style="background-color: #0078D7; color: white; width: 100%; border-radius: 4px;" />
+            </div>
+        </RadzenTemplateForm>
+    </RadzenCard>
+}
+
+
+@code {
+    private LoginObject loginData = new();
+    private string loginError = "";
+
+    protected override void OnInitialized()
+    {
+        AuthorizationService.PropertyChanged += AuthorizationServicePropertyChanged;
+        base.OnInitialized();
+    }
+
+    private void AuthorizationServicePropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(AuthorizationService.isLogged))
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        AuthorizationService.PropertyChanged -= AuthorizationServicePropertyChanged;
+    }
+
+    private async Task LoginMe()
+    {
+        string loginResult = await AuthorizationService.Login(loginData.Username, loginData.Password);
+        loginData = new();
+
+        if (loginResult != "OK")
+        {
+            loginError = loginResult;
+        }
+        else
+        {
+            loginError = "";
+        }
+    }
+
+    private class LoginObject
+    {
+        public string Username { get; set; } = "";
+        public string Password { get; set; } = "";
+    }
+}

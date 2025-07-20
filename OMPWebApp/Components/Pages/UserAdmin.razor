@@ -6,9 +6,10 @@
 @inject AuthorizationService AuthService
 @inject ApiConnectionService<UserDTO> ApiServiceUser
 @inject ApiConnectionService<PositionDTO> ApiServicePosition
-
-<RadzenDataGrid Data="@Users" TItem="UserDTO" AllowVirtualization="true" Style="height:800px"
-AllowFiltering="true" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
+<RadzenCard>
+    <h3>User Manager</h3>
+<RadzenDataGrid Data="@Users" TItem="UserDTO" AllowVirtualization="true" Style="height:fit-content"
+                AllowFiltering="true" PageSize="15" FilterPopupRenderMode="PopupRenderMode.OnDemand" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" LogicalFilterOperator="LogicalFilterOperator.Or"
 AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdateRow">
     <Columns>
         <RadzenDataGridColumn TItem="UserDTO" Property="Name" Title="Name" Width="200px">
@@ -56,7 +57,7 @@ AllowSorting="true" EditMode="Radzen.DataGridEditMode.Single" RowUpdate="OnUpdat
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
-
+</RadzenCard>
 @code {
     List<UserDTO>? Users = new();
 

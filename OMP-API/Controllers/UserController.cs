@@ -13,23 +13,29 @@ namespace OMP_API.Controllers
             var usersDTO = await _context.Users
                 .Where(e => e.CustomerId == id && e.IsDeleted == false)
                 .Select(item => new UserDTO
-            {
-                Id = item.Id,
-                IdentityUserId = item.IdentityUserId,
-                Name = item.Name,
-                Surname = item.Surname,
-                CustomerId = item.CustomerId,
-                PositionId = item.PositionId,
-                CountryId = item.CountryId,
-                CreationDate = item.CreationDate,
-                EditDate = item.EditDate,
-                Position = new PositionDTO
                 {
-                    Id = item.Position != null ? item.Position.Id : 0,
-                    Name = item.Position.Name,
-                    Description = item.Position.Description
-                }
-            }).ToListAsync();
+                    Id = item.Id,
+                    IdentityUserId = item.IdentityUserId,
+                    Name = item.Name,
+                    Surname = item.Surname,
+                    CustomerId = item.CustomerId,
+                    PositionId = item.PositionId,
+                    CountryId = item.CountryId,
+                    CreationDate = item.CreationDate,
+                    EditDate = item.EditDate,
+                    Position = new PositionDTO
+                    {
+                        Id = item.Position != null ? item.Position.Id : 0,
+                        Name = item.Position.Name,
+                        Description = item.Position.Description
+                    },
+                    Country = new CountryDTO
+                    {
+                        Id = item.Country != null ? item.Country.Id : 0,
+                        Name = item.Country.Name,
+                        Description = item.Country.Description
+                    }
+                }).ToListAsync();
 
             return usersDTO;
         }
@@ -86,6 +92,12 @@ namespace OMP_API.Controllers
                         Id = item.Position.Id,
                         Name = item.Position.Name,
                         Description = item.Position.Description
+                    },
+                    Country = new CountryDTO
+                    {
+                        Id = item.Country != null ? item.Country.Id : 0,
+                        Name = item.Country.Name,
+                        Description = item.Country.Description
                     }
                 })
                 .ToListAsync();
@@ -98,5 +110,17 @@ namespace OMP_API.Controllers
             return Ok(usersDTO);
         }
 
+        [HttpGet("UpdateCountry/{id}/{CountryId}")]
+        public async Task<ActionResult> UpdateCountry(int id, int CountryId)
+        {
+            var item = await _context.Users
+                                     .FirstOrDefaultAsync(e => e.Id == id && e.IsDeleted == false);
+
+            item.CountryId = CountryId;
+            await _context.SaveChangesAsync();
+
+
+            return Ok("entity updated successfully");
+        }
     }
 }

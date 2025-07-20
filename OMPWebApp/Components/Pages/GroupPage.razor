@@ -13,31 +13,60 @@
 @inject NavigationManager NavigationManager
 
 <style>
-    .names li {
-        padding: 0.5rem 0rem;
-        background-color: lightblue;
-        padding-left: 10px;
-        border: solid 1px;
-    }
-
-    .tasks li {
-        min-width: 400px;
-    }
-
     .chat-box {
-        max-height: 400px;
+        flex: 1;
         overflow-y: auto;
-        background-color: #f9f9f9;
-        padding: 10px;
-        margin-bottom: 10px;
+        padding: 0.5rem;
+        background-color: #f4f4f4;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-message {
+        display: flex;
+        flex-direction: column;
+        margin: 0.25rem 0;
+        max-width: 75%;
+    }
+
+        .chat-message.other {
+            align-self: flex-start;
+            text-align: justify;
+        }
+
+        .chat-message.self {
+            align-self: flex-end;
+            text-align: justify;
+        }
+
+    .message-bubble {
+        background-color: #d1e7dd;
+        padding: 0.5rem 0.75rem;
+        border-radius: 1rem;
+        display: inline-block;
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .chat-message.self .message-bubble {
+        background-color: #bee5eb;
+    }
+
+    .message-meta {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        margin-top: 2px;
     }
 </style>
 
-<RadzenCard>
+<RadzenCard Style="height: 80vh;">
     <h3>@Group.Title</h3>
-    <RadzenRow>
+    <RadzenRow Style="height: calc(100% - 3rem); overflow: hidden;">
+
         <!-- Members -->
-        <RadzenColumn Size="2">
+        <RadzenColumn Size="2" Style="overflow-y: auto; height: 100%;">
             <h5>Group Members</h5>
             <RadzenDataList class="names" Data="groupMembers" TItem="UserDTO">
                 <Template Context="user">
@@ -47,24 +76,32 @@
         </RadzenColumn>
 
         <!-- Chat -->
-        <RadzenColumn Size="6">
+        <RadzenColumn Size="7" Style="display: flex; flex-direction: column; height: 100%;">
             <h4>Group Chat</h4>
+
+            <!-- Chat Message Container -->
             <div class="chat-box" @ref="chatContainer">
                 @foreach (var msg in messages)
                 {
-                    var sender = groupMembers.FirstOrDefault(u => u.Id == msg.UserID);
-                    <div>
-                        <b>@sender?.Name @sender?.Surname</b>: @msg.Text
+                    var isUser = msg.UserID == AuthService.userDTO?.Id;
+                    <div class="chat-message @(isUser ? "self" : "other")">
+                        <div>
+                            <div class="message-bubble">@msg.Text</div>
+                            <div class="message-meta">@groupMembers.FirstOrDefault(u => u.Id == msg.UserID)?.Name</div>
+                        </div>
                     </div>
                 }
             </div>
 
-            <RadzenTextBox @bind-Value="messageText" Style="width:100%" Placeholder="Type a message..." />
-            <RadzenButton Text="Send" Click="SendMessageAsync" Style="margin-top:5px;" />
+            <!-- Input and Send -->
+            <div style="display: flex; margin-top: auto; gap: 0.5rem; align-items: center;">
+                <RadzenTextBox @bind-Value="messageText" Style="flex: 1;" Placeholder="Type a message..." />
+                <RadzenButton Text="Send" Click="SendMessageAsync" />
+            </div>
         </RadzenColumn>
 
         <!-- Tasks -->
-        <RadzenColumn Size="2">
+        <RadzenColumn Size="3" Style="overflow-y: auto; height: 100%;">
             <RadzenRow>
                 <h4>Group Tasks</h4>
                 @if (groupAdmins?.Any(admin => admin.Id == AuthService.userDTO?.Id) == true)
@@ -76,13 +113,19 @@
             <RadzenDataList Data="groupTasks" TItem="TaskDTO" class="tasks">
                 <Template Context="task">
                     <div style="display: flex; flex-direction: column;">
-                        <span>@task.Title <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click="()=> SeeDetails(task)" /></span>
-                        <span style="font-size:smaller">Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Surname</span>
+                        <span>
+                            @task.Title
+                            <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click="()=> SeeDetails(task)" />
+                        </span>
+                        <span style="font-size:smaller">
+                            Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Surname
+                        </span>
                         <span style="font-size:smaller">Deadline: @task.DeadlineTime.Day / @task.DeadlineTime.Month</span>
                     </div>
                 </Template>
             </RadzenDataList>
         </RadzenColumn>
+
     </RadzenRow>
 </RadzenCard>
 

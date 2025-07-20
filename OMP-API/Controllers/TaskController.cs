@@ -1,4 +1,5 @@
-﻿using ClassLibrary.DTO;
+﻿using System.Globalization;
+using ClassLibrary.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -96,6 +97,42 @@ namespace OMP_API.Controllers
                 }).ToListAsync();
 
             return tasksDTO;
+        }
+
+        [HttpGet("GetByUserAndDate/{UserId}/{datestring}")]
+        public async Task<ActionResult<IEnumerable<TaskDTO>>> GetByUserAndDate(int userid, string datestring)
+        {
+                if (!DateTime.TryParseExact(datestring, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime targetDate))
+                {
+                    return BadRequest($"Invalid date format. Expected yyyy-MM-dd, received: {datestring}");
+                }
+
+                // Get start and end of the target date for precise filtering
+                var startOfDay = targetDate.Date;
+                var endOfDay = targetDate.Date.AddDays(1).AddTicks(-1);
+
+                var tasksDTO = await _context.Tasks
+                    .Where(task => task.TaskRecipient == userid
+                                && task.IsDeleted == false
+                                && task.DeadlineTime >= startOfDay
+                                && task.DeadlineTime <= endOfDay)
+                    .OrderBy(task => task.DeadlineTime)
+                    .Select(item => new TaskDTO
+                    {
+                        Id = item.Id,
+                        TaskRecipient = item.TaskRecipient,
+                        TaskSender = item.TaskSender,
+                        Title = item.Title,
+                        Text = item.Text,
+                        DeadlineTime = item.DeadlineTime,
+                        LateTime = item.LateTime,
+                        CompletionTime = item.CompletionTime,
+                        IsMeeting = item.IsMeeting,
+                        CreationDate = item.CreationDate,
+                    }).ToListAsync();
+
+                return Ok(tasksDTO);
+
         }
 
         [HttpPut("{id}")]

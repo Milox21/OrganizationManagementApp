@@ -3,7 +3,7 @@
 @using ClassLibrary.DTO
 @using OMPWebApp.Services
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
-
+<RadzenCard>
 <h3>Currencies</h3>
 
 <div style="display: flex; gap: 2rem; align-items: flex-start;">
@@ -30,6 +30,7 @@
         <RadzenButton Text="Refresh Currencies" Icon="refresh" Click="RefreshCurrencies" Style="width: 100%;" />
     </div>
 </div>
+</RadzenCard>
 
 @code {
     private List<CurrencyDTO> currencies = new();

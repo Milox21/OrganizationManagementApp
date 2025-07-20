@@ -39,6 +39,9 @@
 
 @code {
     [Parameter] public List<FMSummaryDTO> SummaryItems { get; set; } = new();
+    [Parameter] public DateTime startDate { get; set; } = new();
+    [Parameter] public DateTime endDate { get; set; } = new();
+
     private List<MonthlySummary> ChartData = new();
 
     private List<CurrencyDTO> currencies = new();
@@ -69,7 +72,37 @@
 
     private void CalculateChartData()
     {
-        ChartData = SummaryItems
+        var expandedItems = new List<FMSummaryDTO>();
+
+        foreach (var item in SummaryItems)
+        {
+            if (item.Type == "Payroll" && item.CreationDate.HasValue)
+            {
+                var monthStart = new DateTime(item.CreationDate.Value.Year, item.CreationDate.Value.Month, 1);
+                var endMonth = new DateTime(endDate.Year, endDate.Month, 1);
+
+                while (monthStart <= endMonth)
+                {
+                    // Clone the item for each month
+                    expandedItems.Add(new FMSummaryDTO
+                        {
+                            Type = item.Type,
+                            CreationDate = monthStart,
+                            Netto = item.Netto,
+                            Brutto = item.Brutto,
+                            CurrencyId = item.CurrencyId
+                        });
+
+                    monthStart = monthStart.AddMonths(1);
+                }
+            }
+            else
+            {
+                expandedItems.Add(item); // Add non-payroll as-is
+            }
+        }
+
+        ChartData = expandedItems
             .Where(x => x.CreationDate != null)
             .GroupBy(x => new { x.CreationDate!.Value.Year, x.CreationDate!.Value.Month })
             .Select(g =>

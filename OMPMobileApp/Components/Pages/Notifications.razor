@@ -1,0 +1,559 @@
+﻿@page "/notifications"
+@using ClassLibrary.DTO
+@using OMPMobileApp.Services
+
+@inject ApiConnectionService<NotificationDTO> ApiNotificationService
+@inject AuthorizationService AuthService
+@inject NavigationManager Navigation
+
+<div class="notifications-container">
+    <!-- Header -->
+    <div class="notifications-header">
+        <button class="btn-back" @onclick="GoBack" title="Back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15,18 9,12 15,6" />
+            </svg>
+        </button>
+        <h1 class="page-title">Notifications</h1>
+        @if (notifications?.Count > 0)
+        {
+            <span class="notification-count">@notifications.Count(n => !n.IsSeen)</span>
+        }
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Loading notifications...</p>
+        </div>
+    }
+    else if (hasError)
+    {
+    <div class="error-container">
+        <div class="error-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+        </div>
+        <h3 class="error-title">Something went wrong</h3>
+        <p class="error-message">@errorMessage</p>
+        <button class="btn btn-primary" @onclick="LoadNotifications">Try Again</button>
+    </div>
+    }
+    else if (notifications?.Count == 0)
+    {
+    <div class="empty-state">
+        <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+        </div>
+        <h3 class="empty-title">All caught up!</h3>
+        <p class="empty-subtitle">You have no new notifications</p>
+    </div>
+    }
+    else
+    {
+    <div class="notifications-list">
+        @foreach (var note in notifications)
+        {
+            <div class="notification-card @(note.IsSeen ? "seen" : "unseen")" @key="note.Id">
+                <div class="notification-indicator"></div>
+                <div class="notification-content">
+                    <div class="notification-header">
+                        <div class="notification-source">
+                            <div class="source-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                                </svg>
+                            </div>
+                            <span class="source-text">@note.NotificationSource</span>
+                        </div>
+                        <time class="notification-time">
+                            @GetRelativeTime(note.CreationDate)
+                        </time>
+                    </div>
+                    <p class="notification-text">@note.NotificationText</p>
+                    <div class="notification-actions">
+                        @if (!note.IsSeen)
+                        {
+                            <button class="btn btn-secondary" @onclick="() => MarkAsSeen(note)" disabled="@isProcessing">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20,6 9,17 4,12" />
+                                </svg>
+                                Mark as Read
+                            </button>
+                        }
+                        <button class="btn btn-danger" @onclick="() => DeleteNotification(note)" disabled="@isProcessing">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3,6 5,6 21,6" />
+                                <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2v2" />
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Mark All as Read Button -->
+    @if (notifications.Any(n => !n.IsSeen))
+    {
+        <div class="bulk-actions">
+            <button class="btn btn-outline" @onclick="MarkAllAsSeen" disabled="@isProcessing">
+                Mark All as Read
+            </button>
+        </div>
+    }
+    }
+</div>
+
+<style>
+    .notifications-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .notifications-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        position: relative;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-back svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+    .page-title {
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        flex: 1;
+    }
+
+    .notification-count {
+        background: #ff4757;
+        color: white;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 14px;
+        font-weight: 600;
+        min-width: 24px;
+        text-align: center;
+    }
+
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        color: white;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-bottom: 16px;
+    }
+
+    .loading-text {
+        font-size: 16px;
+        opacity: 0.8;
+    }
+
+    .error-container, .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 60px 20px;
+        text-align: center;
+        color: white;
+    }
+
+    .error-icon, .empty-icon {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 24px;
+        opacity: 0.7;
+    }
+
+    .error-title, .empty-title {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+    }
+
+    .error-message, .empty-subtitle {
+        font-size: 16px;
+        opacity: 0.8;
+        margin-bottom: 24px;
+    }
+
+    .notifications-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .notification-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+        .notification-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-card.unseen {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .notification-card.seen {
+            opacity: 0.8;
+        }
+
+    .notification-indicator {
+        width: 4px;
+        background: transparent;
+        transition: background-color 0.3s ease;
+    }
+
+    .notification-card.unseen .notification-indicator {
+        background: #667eea;
+    }
+
+    .notification-content {
+        flex: 1;
+        padding: 20px;
+    }
+
+    .notification-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+
+    .notification-source {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .source-icon {
+        width: 18px;
+        height: 18px;
+        color: #667eea;
+    }
+
+    .source-text {
+        font-weight: 600;
+        color: #667eea;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .notification-time {
+        font-size: 12px;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .notification-text {
+        color: #1e293b;
+        font-size: 16px;
+        line-height: 1.5;
+        margin: 0 0 16px 0;
+    }
+
+    .notification-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+        }
+
+    .btn-danger {
+        background: #fee2e2;
+        color: #dc2626;
+    }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #fecaca;
+        }
+
+    .btn-outline {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+        .btn-outline:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+    .bulk-actions {
+        margin-top: 20px;
+        text-align: center;
+    }
+</style>
+
+@code {
+    bool isLoading = true;
+    bool isProcessing = false;
+    bool hasError = false;
+    string errorMessage = "";
+    List<NotificationDTO> notifications = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications();
+    }
+
+    private async Task LoadNotifications()
+    {
+        try
+        {
+            isLoading = true;
+            hasError = false;
+            errorMessage = "";
+            StateHasChanged();
+
+            var userId = AuthService?.userDTO?.Id ?? 0;
+            if (userId <= 0)
+            {
+                throw new Exception("User authentication required. Please log in again.");
+            }
+
+            var result = await ApiNotificationService.GetResources($"/api/Notification/GetByUser/{userId}");
+
+            if (result != null)
+            {
+                notifications = result
+                    .Where(n => !n.IsDeleted)
+                    .OrderByDescending(n => !n.IsSeen)
+                    .ThenByDescending(n => n.CreationDate)
+                    .ToList();
+            }
+            else
+            {
+                notifications = new List<NotificationDTO>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            hasError = true;
+            notifications = new List<NotificationDTO>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task MarkAsSeen(NotificationDTO note)
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            note.IsSeen = true;
+            await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
+
+            // Update local state instead of reloading all notifications
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Revert the change if API call failed
+            note.IsSeen = false;
+            errorMessage = $"Failed to mark notification as seen: {ex.Message}";
+            hasError = true;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteNotification(NotificationDTO note)
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            note.IsDeleted = true;
+            note.DeleteDate = DateTime.Now;
+            await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
+
+            // Remove from local list
+            notifications.Remove(note);
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            // Revert the change if API call failed
+            note.IsDeleted = false;
+            note.DeleteDate = null;
+            errorMessage = $"Failed to delete notification: {ex.Message}";
+            hasError = true;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task MarkAllAsSeen()
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            StateHasChanged();
+
+            var unseenNotifications = notifications.Where(n => !n.IsSeen).ToList();
+
+            foreach (var note in unseenNotifications)
+            {
+                note.IsSeen = true;
+                await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to mark all notifications as seen: {ex.Message}";
+            hasError = true;
+            // Reload to get correct state
+            await LoadNotifications();
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetRelativeTime(DateTime dateTime)
+    {
+        var timeSpan = DateTime.Now - dateTime;
+
+        if (timeSpan.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSpan.TotalMinutes < 60)
+            return $"{(int)timeSpan.TotalMinutes}m ago";
+        else if (timeSpan.TotalHours < 24)
+            return $"{(int)timeSpan.TotalHours}h ago";
+        else if (timeSpan.TotalDays < 7)
+            return $"{(int)timeSpan.TotalDays}d ago";
+        else
+            return dateTime.ToString("MMM dd");
+    }
+
+    void GoBack()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

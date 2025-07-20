@@ -8,127 +8,234 @@
 @inject ApiConnectionService<FMSummaryDTO> ApiServiceSummary
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
 @inject AuthorizationService AuthService
+@inject TemplateUploadService TemplateUploader
 @inject DialogService DialogService
 
-<RadzenCard>
-    <h3>Financial Summary</h3>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold mb-0">
+            <i class="fas fa-chart-line me-2"></i>Financial Summary
+        </h2>
+        <small class="text-muted">
+            @DateTime.Now.ToString("MMMM dd, yyyy")
+        </small>
+    </div>
 
-    <!-- Summary Overview -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <RadzenCard Style="background-color: #d4edda; border: 1px solid #c3e6cb;">
-                <h5 class="text-success">Total Income</h5>
-                <h3 class="text-success">@($"{totalIncomeBrutto:N2} {selectedCurrency?.Code}")</h3>
+    <!-- Key Metrics Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4 col-md-6">
+            <RadzenCard Style="background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 12px;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-success mb-1 fw-semibold">Total Income</h6>
+                        <h4 class="text-success mb-0 fw-bold">@($"{totalIncomeBrutto:N2}")</h4>
+                        <small class="text-success opacity-75">@selectedCurrency?.Code</small>
+                    </div>
+                    <div class="text-success opacity-50">
+                        <i class="fas fa-arrow-up fa-2x"></i>
+                    </div>
+                </div>
+                <hr class="my-2 border-success opacity-25">
+                <div class="d-flex align-items-center">
+                    <small class="text-success me-2">
+                        <i class="fas fa-plus-circle me-1"></i>Positive Notes
+                    </small>
+                    <span class="text-success fw-semibold">@($"{totalDebitNotesPositive:N2}")</span>
+                </div>
             </RadzenCard>
         </div>
-        <div class="col-md-4">
-            <RadzenCard Style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
-                <h5 class="text-danger">Total Cost & Payroll</h5>
-                <h3 class="text-danger">@($"{totalCostAndPayrollBrutto:N2} {selectedCurrency?.Code}")</h3>
+        
+        <div class="col-lg-4 col-md-6">
+            <RadzenCard Style="background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 12px;">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-danger mb-1 fw-semibold">Total Expenses</h6>
+                        <h4 class="text-danger mb-0 fw-bold">@($"{totalCostAndPayrollBrutto:N2}")</h4>
+                        <small class="text-danger opacity-75">@selectedCurrency?.Code</small>
+                    </div>
+                    <div class="text-danger opacity-50">
+                        <i class="fas fa-arrow-down fa-2x"></i>
+                    </div>
+                </div>
+                <hr class="my-2 border-danger opacity-25">
+                <div class="d-flex align-items-center">
+                    <small class="text-danger me-2">
+                        <i class="fas fa-minus-circle me-1"></i>Negative Notes
+                    </small>
+                    <span class="text-danger fw-semibold">@($"{Math.Abs(totalDebitNotesNegative):N2}")</span>
+                </div>
             </RadzenCard>
         </div>
-        <div class="col-md-4">
-            @if(balance>0)
-            {
-                <RadzenCard Style="background-color: #d4edda; border: 1px solid #c3e6cb);">
-                    <h5 class="@(balance >= 0 ? "text-success" : "text-danger")">Balance</h5>
-                    <h3 class="@(balance >= 0 ? "text-success" : "text-danger")">@($"{balance:N2} {selectedCurrency?.Code}")</h3>
-                </RadzenCard>
-            } 
-            else 
-            {
-                <RadzenCard Style="background-color: #f8d7da; border: 1px solid #f5c6cb);">
-                    <h5 class="@(balance >= 0 ? "text-success" : "text-danger")">Balance</h5>
-                    <h3 class="@(balance >= 0 ? "text-success" : "text-danger")">@($"{balance:N2} {selectedCurrency?.Code}")</h3>
-                </RadzenCard>
+        
+        <div class="col-lg-4 col-md-6">
+            @{
+                var balanceColor = balance >= 0 ? "success" : "danger";
+                var balanceIcon = balance >= 0 ? "fa-check-circle" : "fa-exclamation-triangle";
+                var balanceGradient = balance >= 0 ? "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)" : "linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%)";
             }
-
+            <RadzenCard Style="@($"background: {balanceGradient}; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 12px;")">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h6 class="text-@balanceColor mb-1 fw-semibold">Net Balance</h6>
+                        <h4 class="text-@balanceColor mb-0 fw-bold">@($"{balance:N2}")</h4>
+                        <small class="text-@balanceColor opacity-75">@selectedCurrency?.Code</small>
+                    </div>
+                    <div class="text-@balanceColor opacity-50">
+                        <i class="fas @balanceIcon fa-2x"></i>
+                    </div>
+                </div>
+            </RadzenCard>
         </div>
     </div>
 
-    <!-- Filters -->
-    <RadzenCard Style="margin-bottom: 20px;">
-        <h5>Filters</h5>
-        <div class="row mb-3">
-            <div class="col-md-2">
-                <RadzenLabel Text="Display Currency" />
+    <!-- Filters Section -->
+    <RadzenCard Style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 12px; margin-bottom: 20px;">
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="mb-0 text-primary fw-semibold">
+                <i class="fas fa-filter me-2"></i>Filters & Search
+            </h5>
+        </div>
+        
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <RadzenLabel Text="Start Date" class="form-label fw-semibold text-secondary" />
+                <RadzenDatePicker @bind-Value="startDate" 
+                                  DateFormat="yyyy-MM-dd" 
+                                  Style="width: 100%; border-radius: 8px;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenLabel Text="End Date" class="form-label fw-semibold text-secondary" />
+                <RadzenDatePicker @bind-Value="endDate" 
+                                  DateFormat="yyyy-MM-dd" 
+                                  Style="width: 100%; border-radius: 8px;" />
+            </div>
+            <div class="col-md-3">
+                <RadzenLabel Text="Display Currency" class="form-label fw-semibold text-secondary" />
                 <RadzenDropDown @bind-Value="selectedCurrencyCode"
-                Data="@currencies"
-                TextProperty="Code"
-                ValueProperty="Code"
-                Style="width: 100%;"
-                Change="@OnCurrencyChanged" />
+                                Data="@currencies"
+                                TextProperty="Code"
+                                ValueProperty="Code"
+                                Style="width: 100%; border-radius: 8px;"
+                                Change="@OnCurrencyChanged" />
             </div>
-            <div class="col-md-3">
-                <RadzenLabel Text="Start Date" />
-                <RadzenDatePicker @bind-Value="startDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
+            <div class="col-md-3 d-flex align-items-end">
+                <RadzenButton Icon="search"
+                              Text="Apply Filters"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@LoadSummaryData"
+                              Style="width: 100%; border-radius: 8px;" />
             </div>
-            <div class="col-md-3">
-                <RadzenLabel Text="End Date" />
-                <RadzenDatePicker @bind-Value="endDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
-            </div>
-
-
         </div>
-
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <RadzenLabel Text="Type Filter" />
+        
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <RadzenLabel Text="Transaction Types" class="form-label fw-semibold text-secondary" />
                 <RadzenCheckBoxList @bind-Value="selectedTypes"
-                Data="@availableTypes"
-                TextProperty="Text"
-                ValueProperty="Value"
-                Style="width: 100%;" />
+                                    Data="@availableTypes"
+                                    TextProperty="Text"
+                                    ValueProperty="Value"
+                                    Style="width: 100%;" />
             </div>
         </div>
 
-
-        <div class="row mb-3">
-            <div class="col-md-2 d-flex align-items-end">
-                <RadzenButton Text="Search"
-                ButtonStyle="ButtonStyle.Primary"
-                Click="@LoadSummaryData"
-                Style="width: 100%;" />
+        <hr class="my-3">
+        
+        <div class="row g-2">
+            <div class="col-md-3">
+                <RadzenButton Icon="assessment" 
+                              Text="Combined Chart" 
+                              ButtonStyle="ButtonStyle.Secondary" 
+                              Style="width: 100%; border-radius: 8px;" 
+                              Click="@OpenSingleLineDialog" />
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <RadzenButton Icon="assessment" Text="Combined Chart" ButtonStyle="ButtonStyle.Primary" Style="width: 100%;" Click="@OpenSingleLineDialog" />
+            <div class="col-md-3">
+                <RadzenButton Icon="analytics" 
+                              Text="Detailed Chart" 
+                              ButtonStyle="ButtonStyle.Secondary" 
+                              Style="width: 100%; border-radius: 8px;" 
+                              Click="@OpenMultiLineDialog" />
             </div>
-
-            <div class="col-md-2 d-flex align-items-end">
-                <RadzenButton Icon="assessment" Text="Diversified  Chart" ButtonStyle="ButtonStyle.Primary" Style="width: 100%;" Click="@OpenMultiLineDialog" />
-            </div>
-
-            <div class="col-md-2 d-flex align-items-end">
+            <div class="col-md-3">
                 <RadzenButton Icon="download"
-                              Text="Create Report"
+                              Text="Export Report"
                               ButtonStyle="ButtonStyle.Success"
                               Click="@DownloadPdfAsync"
-                              Style="width: 100%;" />
+                              Style="width: 100%; border-radius: 8px;" />
             </div>
+
+            <div class="col-md-3">
+                <RadzenButton Icon="description"
+                              Text="Generate Custom Word Report"
+                              ButtonStyle="ButtonStyle.Info"
+                              Click="@GenerateWordReportDialog"
+                              Style="width: 100%; border-radius: 8px;" />
+            </div>
+
+
         </div>
     </RadzenCard>
-</RadzenCard>
 
-<RadzenCard Style="margin-top: 20px;">
-    <h4>Detailed Summary</h4>
+    <!-- Data Table -->
+    <RadzenCard Style="border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-radius: 12px;">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <h5 class="mb-0 text-primary fw-semibold">
+                <i class="fas fa-table me-2"></i>Transaction Details
+            </h5>
+            <small class="text-muted">@filteredSummaryData.Count() records</small>
+        </div>
 
-    <RadzenDataGrid TItem="FMSummaryDTO" Data="@filteredSummaryData" AllowPaging="true" AllowFiltering="true" FilterMode="FilterMode.CheckBoxList" PageSize="15" AllowSorting="true">
-        <Columns>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Type"  Title="Type" Width="100px">
-                <Template Context="item">
-                    <RadzenBadge BadgeStyle="@GetBadgeStyle(item.Type)" Text="@item.Type" />
-                </Template>
-            </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Title" Title="Title" Width="200px"/>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Occurance" Title="Occurance" Width="100px" />
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Netto" Title="Netto" Width="120px"/>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Tax" Title="Tax %" Width="100px"/>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="TaxValue" Title="Tax Value" Width="120px"/>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Brutto" Title="Brutto" Width="120px"/>
-            <RadzenDataGridColumn TItem="FMSummaryDTO" Property="CreationDate" Title="Creation Date" Width="120px" />
-        </Columns>
-    </RadzenDataGrid>
-</RadzenCard>
+        <RadzenDataGrid TItem="FMSummaryDTO" 
+                        Data="@filteredSummaryData" 
+                        AllowPaging="true" 
+                        AllowFiltering="true" 
+                        FilterMode="FilterMode.CheckBoxList" 
+                        PageSize="15" 
+                        AllowSorting="true"
+                        Style="border-radius: 8px;">
+            <Columns>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Type" Title="Type" Width="120px">
+                    <Template Context="item">
+                        <RadzenBadge BadgeStyle="@GetBadgeStyle(item.Type)" 
+                                     Text="@item.Type" 
+                                     Style="border-radius: 6px; font-size: 0.75rem;" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Title" Title="Title" Width="200px">
+                    <Template Context="item">
+                        <span class="fw-semibold">@item.Title</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Occurance" Title="Occurrence" Width="100px" />
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Netto" Title="Net Amount" Width="120px">
+                    <Template Context="item">
+                        <span class="fw-semibold">@($"{item.Netto:N2}")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Tax" Title="Tax %" Width="100px">
+                    <Template Context="item">
+                        <span class="text-muted">@($"{item.Tax:P1}")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="TaxValue" Title="Tax Value" Width="120px">
+                    <Template Context="item">
+                        <span class="text-warning fw-semibold">@($"{item.TaxValue:N2}")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Brutto" Title="Gross Amount" Width="120px">
+                    <Template Context="item">
+                        <span class="fw-bold text-primary">@($"{item.Brutto:N2}")</span>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="FMSummaryDTO" Property="CreationDate" Title="Date" Width="120px">
+                    <Template Context="item">
+                        <small class="text-muted">@item.CreationDate</small>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</div>
 
 @code {
     private List<CurrencyDTO> currencies = new();
@@ -142,6 +249,8 @@
     private decimal totalIncomeBrutto = 0;
     private decimal totalCostAndPayrollBrutto = 0;
     private decimal balance = 0;
+    private decimal totalDebitNotesPositive = 0;
+    private decimal totalDebitNotesNegative = 0;
 
     private IEnumerable<string> selectedTypes = new List<string> { "Income", "Cost", "Payroll", "Debit Note" };
 
@@ -206,12 +315,19 @@
             .Where(s => s.Type == "Payroll")
             .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
 
-        var totalDebetNotes = filteredSummaryData
-        .Where(s => s.Type == "Debit Note")
-        .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));
+        var debitNotes = filteredSummaryData.Where(s => s.Type == "Debit Note").ToList();
+
+        totalDebitNotesPositive = debitNotes
+            .Where(d => ConvertCurrency(d.Brutto ?? 0, d.CurrencyId) > 0)
+            .Sum(d => ConvertCurrency(d.Brutto ?? 0, d.CurrencyId));
+
+        totalDebitNotesNegative = debitNotes
+            .Where(d => ConvertCurrency(d.Brutto ?? 0, d.CurrencyId) < 0)
+            .Sum(d => ConvertCurrency(d.Brutto ?? 0, d.CurrencyId));
+
 
         totalCostAndPayrollBrutto = totalCost + totalPayroll;
-        balance = totalIncomeBrutto - totalCostAndPayrollBrutto + totalDebetNotes;
+        balance = totalIncomeBrutto - totalCostAndPayrollBrutto + totalDebitNotesPositive + totalDebitNotesNegative;
     }
 
     private BadgeStyle GetBadgeStyle(string type)
@@ -247,9 +363,11 @@
     {
         await DialogService.OpenAsync<SummarySingleLineChartDialog>("Single Line Chart",
             new Dictionary<string, object>()
-                    {
-            { "SummaryItems", filteredSummaryData }
-                    },
+                        {
+                    { "startDate", startDate},
+                    { "endDate", endDate},
+                    { "SummaryItems", filteredSummaryData }
+                        },
             new DialogOptions()
                 {
                     Width = "900px",
@@ -266,12 +384,14 @@
         var DebitNotes = summaryData.Where(s => s.Type == "Debit Note").ToList();
         await DialogService.OpenAsync<SummaryMultiLineChartDialog>("Multi Line Chart",
             new Dictionary<string, object>()
-                        {
+                {
+                    ["startDate"] = startDate,
+                    ["endDate"] = endDate,
                     ["Incomes"] = Incomes,
                     ["Costs"] = Costs,
                     ["Payrolls"] = Payrolls,
                     ["DebitNotes"] = DebitNotes
-                        },
+                },
             new DialogOptions()
                 {
                     Width = "900px",
@@ -311,4 +431,28 @@
             Console.WriteLine("Error downloading PDF: " + ex.Message);
         }
     }
+    private async Task GenerateWordReportDialog()
+    {
+        var request = new FMSummaryReportRequestDTO
+            {
+                CustomerId = AuthService.userDTO.CustomerId,
+                StartDate = startDate,
+                EndDate = endDate,
+                Items = filteredSummaryData
+            };
+
+
+        await DialogService.OpenAsync<FMCustomReportDialog>("Custom Report",
+        new Dictionary<string, object>()
+                        {
+                             { "request", request }
+                        },
+        new DialogOptions()
+            {
+                Width = "900px",
+                Height = "700px"
+            });
+    }
+
+
 }

@@ -22,6 +22,7 @@ public partial class DatabaseContext : IdentityDbContext<IdentityUser>
 
     public virtual DbSet<Country> Countries { get; set; }
 
+    public virtual DbSet<TaskMessage> TaskMessages { get; set; }
     public virtual DbSet<Currency> Currencies { get; set; }
 
     public virtual DbSet<Customer> Customers { get; set; }

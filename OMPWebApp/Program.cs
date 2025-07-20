@@ -25,6 +25,7 @@ builder.Services.AddScoped<ThemeService>();
 
 builder.Services.AddScoped(typeof(ApiConnectionService<>));
 builder.Services.AddScoped<AuthorizationService>(); 
+builder.Services.AddScoped<TemplateUploadService>(); 
 var app = builder.Build();
 
 

@@ -7,12 +7,13 @@
 @inject AuthorizationService AuthService
 @inject ApiConnectionService<UserDTO> ApiServiceUser
 @inject ApiConnectionService<GroupDTO> ASGroup
-
+<RadzenCard>
+    <h3>Group Manager</h3>
 <div class="rz-p-4 rz-text-align-left">
     <RadzenButton Text="Add Group" ButtonStyle="ButtonStyle.Secondary" Click=@NewGroupDialog />
 </div>
 
-<RadzenDataGrid TItem="GroupDTO" Data="@Groups" Editable="true" Style="width: 60%;" AllowFiltering="false" AllowPaging="false" AllowSorting="false">
+<RadzenDataGrid TItem="GroupDTO" Data="@Groups" Editable="true" Style="width: 100%;" AllowFiltering="false" PageSize="15" AllowPaging="true" AllowSorting="false">
     <Columns>
 
         <RadzenDataGridColumn TItem="GroupDTO" Property="Title" Title="Title"/>
@@ -39,7 +40,7 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
-
+</RadzenCard>
 @code {
     List<GroupDTO>? Groups = new();
 

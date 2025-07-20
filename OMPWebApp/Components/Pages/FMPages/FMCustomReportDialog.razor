@@ -1,0 +1,85 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject ApiConnectionService<FMSummaryDTO> ApiServiceSummary
+@inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
+@inject AuthorizationService AuthService
+@inject TemplateUploadService TemplateUploader
+@inject DialogService DialogService
+
+<RadzenCard Style="margin-top: 20px;">
+    <h5 class="mb-3 text-primary">Manage Report Instruction</h5>
+    <p>You can upload a custom Word (.docx) template using placeholders inside <code>{curly_brackets}</code>.</p>
+
+    <ul>
+        <li><code>{StartDate}</code> – Displays the selected report start date</li>
+        <li><code>{EndDate}</code> – Displays the selected report end date</li>
+        <li><code>{TotalIncome}</code> – Sum of all "Income" items</li>
+        <li><code>{TotalCost}</code> – Sum of all "Cost" items</li>
+        <li><code>{NetBalance}</code> – Overall balance including all types</li>
+        <li><code>{table}</code> – Will be replaced with a full transaction table</li>
+    </ul>
+
+    <p>✨ Example in your Word file:</p>
+    <pre style="background-color:#f8f9fa; padding:10px; border-radius:6px;">
+Financial Summary Report  
+Start Date: {StartDate}  
+End Date: {EndDate}  
+Total Income: {TotalIncome}  
+Total Cost: {TotalCost}  
+Net Balance: {NetBalance}  
+
+{table}
+    </pre>
+</RadzenCard>
+<RadzenCard Style="margin-top: 20px;">
+    <h5 class="mb-3 text-primary">Manage Report Template</h5>
+    <p style="margin-bottom: 10px">If no Template given, custom report will use the latest given Template </p>
+    <InputFile OnChange="OnFileChange" accept=".docx" />
+</RadzenCard>
+<RadzenCard Style="margin-top: 20px;">
+<RadzenButton Icon="description"
+              Text="Generate Custom Word Report"
+              ButtonStyle="ButtonStyle.Info"
+              Click="@GenerateWordReport"
+              Style="width: 100%; border-radius: 8px;" />
+</RadzenCard>
+@code {
+    [Parameter] public FMSummaryReportRequestDTO request { get; set; }
+
+    private async Task GenerateWordReport()
+    {
+        try
+        {
+
+
+            var response = await Http.PostAsJsonAsync("/api/Printout/generate-summary", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var wordBytes = await response.Content.ReadAsByteArrayAsync();
+                var base64 = Convert.ToBase64String(wordBytes);
+                var fileName = $"summary-report-{DateTime.Now:yyyyMMddHHmm}.docx";
+
+                await JS.InvokeVoidAsync("downloadFile", fileName, base64);
+            }
+            else
+            {
+                Console.WriteLine("Failed to download Word report: " + response.StatusCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error generating Word report: " + ex.Message);
+        }
+    }
+
+    private async Task OnFileChange(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        var result = await TemplateUploader.UploadTemplateAsync(file);
+        Console.WriteLine($"Upload Result: {result}");
+    }
+}

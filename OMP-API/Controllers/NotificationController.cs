@@ -93,5 +93,60 @@ namespace OMP_API.Controllers
                 return StatusCode(500, $"Internal server error: {e.Message}");
             }
         }
+
+        [HttpGet("Seen/{id}")]
+        public async Task<ActionResult> Seen(int id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+
+            var existingItem = await _context.Notifications.FindAsync(id);
+            if (existingItem == null)
+            {
+                return NotFound($"Task with ID {id} not found");
+            }
+            existingItem.IsSeen = true;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok("Entity updated successfully");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Internal server error: {e.Message}");
+            }
+        }
+
+        [HttpGet("DeleteById/{id}")]
+        public async Task<ActionResult> Delete(int id)
+        {
+            if (id == null)
+            {
+                return BadRequest();
+            }
+
+            var existingItem = await _context.Notifications.FindAsync(id);
+            if (existingItem == null)
+            {
+                return NotFound($"Task with ID {id} not found");
+            }
+            existingItem.DeleteDate = DateTime.UtcNow;
+            existingItem.IsDeleted = true;
+
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                return Ok("Entity updated successfully");
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, $"Internal server error: {e.Message}");
+            }
+        }
     }
 }

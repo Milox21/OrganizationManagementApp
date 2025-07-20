@@ -3,6 +3,8 @@
 
 @inject DialogService DialogService
 @inject AuthorizationService AuthService
+@inject ApiConnectionService<CountryDTO> ApiServiceCountry
+@inject ApiConnectionService<UserDTO> ApiServiceUser
 
 <RadzenStack Gap="1rem" Orientation="Orientation.Vertical" JustifyContent="JustifyContent.SpaceBetween" Style="height: 100%;">
     <RadzenStack>
@@ -18,31 +20,62 @@
                     </RadzenStack>
                 </RadzenStack>
             </RadzenColumn>
+
             <RadzenColumn Size="12" SizeMD="6" class="rz-p-4 rz-border-radius-1" Style="border: var(--rz-grid-cell-border)">
                 <RadzenText TextStyle="TextStyle.Subtitle1">Profile Details</RadzenText>
                 <RadzenStack Gap="0" class="rz-text-truncate">
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-2 rz-my-0" Style="color: var(--rz-text-tertiary-color);">Company</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.CompanyName</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@User?.CompanyName</b></RadzenText>
+
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-4 rz-mb-0" Style="color: var(--rz-text-tertiary-color);">Position</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.Position?.Name</b></RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1"><b>@User?.Position?.Name</b></RadzenText>
+
                     <RadzenText TextStyle="TextStyle.Overline" class="rz-mt-4 rz-mb-0" Style="color: var(--rz-text-tertiary-color);">Country</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" class="rz-text-truncate"><b>@User?.Country?.Name</b></RadzenText>
+                    @if (isEditMode)
+                    {
+                        <RadzenDropDown TValue="int?"
+                                        @bind-Value="User.CountryId"
+                                        Data="@countries"
+                                        TextProperty="Name"
+                                        ValueProperty="Id"
+                                        Style="width: 100%;" />
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body1"><b>@User?.Country?.Name</b></RadzenText>
+                    }
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
     </RadzenStack>
-    <RadzenStack Visible="true" Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
         <RadzenButton Click="@OnClose" Variant="Variant.Flat" Text="Close" Style="width: 120px" />
-        <RadzenButton Click="@OnEdit" Variant="Variant.Flat" Text="Edit" Style="width: 120px" />
+        @if (isEditMode)
+        {
+            <RadzenButton Click="@OnSave" Variant="Variant.Filled" Text="Save" Style="width: 120px" />
+        }
+        else
+        {
+            <RadzenButton Click="@OnEdit" Variant="Variant.Flat" Text="Edit" Style="width: 120px" />
+        }
     </RadzenStack>
 </RadzenStack>
 
 @code {
     [Parameter] public UserDTO? User { get; set; } = new();
 
-    private async Task OnEdit()
+    private bool isEditMode = false;
+    private List<CountryDTO> countries = new();
+
+    protected override async Task OnInitializedAsync()
     {
-        DialogService.Close("edit");
+        countries = await ApiServiceCountry.GetResources("/api/Country");
+    }
+
+    private void OnEdit()
+    {
+        isEditMode = true;
     }
 
     private void OnClose()
@@ -50,4 +83,11 @@
         DialogService.Close();
     }
 
+    private async void OnSave()
+    {
+
+        await ApiServiceUser.ExecuteGetRequest($"/api/User/UpdateCountry/{User.Id}/{User.CountryId}");
+        isEditMode = false;
+        
+    }
 }

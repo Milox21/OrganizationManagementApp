@@ -48,6 +48,9 @@
     [Parameter] public List<FMSummaryDTO> Payrolls { get; set; } = new();
     [Parameter] public List<FMSummaryDTO> DebitNotes { get; set; } = new();
 
+    [Parameter] public DateTime startDate { get; set; } = new();
+    [Parameter] public DateTime endDate { get; set; } = new();
+
     private List<CurrencyDTO> currencies = new();
     private string selectedCurrencyCode = "USD";
     private CurrencyDTO? selectedCurrency;
@@ -79,36 +82,59 @@
 
     private void CalculateChartData()
     {
-        var allDates = Incomes.Concat(Costs).Concat(Payrolls).Concat(DebitNotes)
-                              .Where(x => x.CreationDate != null)
-                              .Select(x => new DateTime(x.CreationDate!.Value.Year, x.CreationDate!.Value.Month, 1))
-                              .Distinct()
-                              .OrderBy(d => d)
-                              .ToList();
+        var monthList = new List<DateTime>();
+        var current = new DateTime(startDate.Year, startDate.Month, 1);
+        var end = new DateTime(endDate.Year, endDate.Month, 1);
 
-        ChartData = allDates.Select(month =>
+        while (current <= end)
         {
-            var incomeSum = Incomes.Where(x => IsSameMonth(x.CreationDate, month))
-                                   .Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId));
+            monthList.Add(current);
+            current = current.AddMonths(1);
+        }
 
-            var costSum = Costs.Where(x => IsSameMonth(x.CreationDate, month))
-                               .Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId));
+        var incomeByMonth = Incomes
+            .Where(x => x.CreationDate != null)
+            .GroupBy(x => new DateTime(x.CreationDate!.Value.Year, x.CreationDate.Value.Month, 1))
+            .ToDictionary(g => g.Key, g => g.Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId)));
 
-            var payrollSum = Payrolls.Where(x => IsSameMonth(x.CreationDate, month))
-                                     .Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId));
+        var costByMonth = Costs
+            .Where(x => x.CreationDate != null)
+            .GroupBy(x => new DateTime(x.CreationDate!.Value.Year, x.CreationDate.Value.Month, 1))
+            .ToDictionary(g => g.Key, g => g.Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId)));
 
-            var debitNoteSum = DebitNotes.Where(x => IsSameMonth(x.CreationDate, month))
-                                         .Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId));
+        var debitByMonth = DebitNotes
+            .Where(x => x.CreationDate != null)
+            .GroupBy(x => new DateTime(x.CreationDate!.Value.Year, x.CreationDate.Value.Month, 1))
+            .ToDictionary(g => g.Key, g => g.Sum(x => ConvertCurrency(x.Netto ?? 0, x.CurrencyId)));
 
-            return new MonthlyBalance
-                {
-                    MonthLabel = month.ToString("MMM yyyy"),
-                    Income = incomeSum,
-                    Cost = -costSum,
-                    Payroll = -payrollSum,
-                    DebitNote = -debitNoteSum
-                };
-        }).ToList();
+        var payrollByMonth = new Dictionary<DateTime, decimal>();
+        foreach (var payroll in Payrolls.Where(p => p.CreationDate != null))
+        {
+            var start = new DateTime(payroll.CreationDate!.Value.Year, payroll.CreationDate.Value.Month, 1);
+            var amount = ConvertCurrency(payroll.Netto ?? 0, payroll.CurrencyId);
+
+            var month = start;
+            while (month <= end)
+            {
+                if (!payrollByMonth.ContainsKey(month))
+                    payrollByMonth[month] = 0;
+                payrollByMonth[month] += amount;
+
+                month = month.AddMonths(1);
+            }
+        }
+
+        ChartData = monthList
+    .Select(month => new MonthlyBalance
+        {
+            MonthLabel = month.ToString("MMM yyyy"),
+            Income = incomeByMonth.TryGetValue(month, out var income) ? income : 0,
+            Cost = costByMonth.TryGetValue(month, out var cost) ? cost : 0,
+            Payroll = payrollByMonth.TryGetValue(month, out var payroll) ? payroll : 0,
+            DebitNote = debitByMonth.TryGetValue(month, out var debit) ? debit : 0
+        })
+    .Where(mb => mb.Income != 0 || mb.Cost != 0 || mb.Payroll != 0 || mb.DebitNote != 0) // 🔥 Only include if at least one value is non-zero
+    .ToList();
     }
 
     private bool IsSameMonth(DateTime? date, DateTime target)

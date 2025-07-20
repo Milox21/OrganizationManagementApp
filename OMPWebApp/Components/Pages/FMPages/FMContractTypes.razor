@@ -11,15 +11,15 @@
 
 <style>
     .header-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
     }
 
     .header-title {
-        font-weight: bold;
-        font-size: 1.2rem;
+    font-weight: bold;
+    font-size: 1.2rem;
     }
 </style>
 
@@ -32,10 +32,10 @@
             </div>
 
             <RadzenDataGrid Data="@contractTypes" TItem="ContractTypeDTO"
-                            AllowPaging="true"
-                            PageSize="10"
-                            ShowPagingSummary="true"
-                            AllowSorting="true">
+            AllowPaging="true"
+            PageSize="10"
+            ShowPagingSummary="true"
+            AllowSorting="true">
                 <Columns>
                     <RadzenDataGridColumn TItem="ContractTypeDTO" Property="Title" Title="Title" />
                     <RadzenDataGridColumn TItem="ContractTypeDTO" Property="Type" Title="Type" />
@@ -46,8 +46,8 @@
                     <RadzenDataGridColumn Width="100px" TItem="ContractTypeDTO" Title="Edit">
                         <Template Context="ct">
                             <RadzenButton Icon="edit" Size="ButtonSize.Small"
-                                          Click="@(args => EditContractType(ct))"
-                                          Style="margin-right: 0.5rem;" />
+                            Click="@(args => EditContractType(ct))"
+                            Style="margin-right: 0.5rem;" />
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -55,9 +55,9 @@
                     <RadzenDataGridColumn Width="100px" TItem="ContractTypeDTO" Title="Delete">
                         <Template Context="ct">
                             <RadzenButton Icon="delete"
-                                          ButtonStyle="ButtonStyle.Danger"
-                                          Size="ButtonSize.Small"
-                                          Click="@(args => DeleteContractType(ct))" />
+                            ButtonStyle="ButtonStyle.Danger"
+                            Size="ButtonSize.Small"
+                            Click="@(args => DeleteContractType(ct))" />
                         </Template>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -81,19 +81,23 @@
 
     private async void AddContractType()
     {
-        await DialogService.OpenAsync<AddContractTypeDialog>("New Contract Type",
+        var result = await DialogService.OpenAsync<AddContractTypeDialog>("New Contract Type",
             null,
             new DialogOptions()
                 {
                     Width = "700px",
                     Height = "550px"
                 });
-        await LoadData();
+        if (result is bool success && success)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async void EditContractType(ContractTypeDTO contractType)
     {
-        await DialogService.OpenAsync<AddContractTypeDialog>("Edit Contract Type",
+        var result = await DialogService.OpenAsync<AddContractTypeDialog>("Edit Contract Type",
             new Dictionary<string, object>()
                 {
             { "contractType", contractType }
@@ -103,7 +107,11 @@
                     Width = "700px",
                     Height = "550px"
                 });
-        await LoadData();
+        if (result is bool success && success)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async void DeleteContractType(ContractTypeDTO contractType)
@@ -113,6 +121,7 @@
         if (confirmed == true)
         {
             await ContractTypeService.DeleteResource($"/api/Contracts/Delete/{contractType.Id}");
+            contractTypes.Remove(contractType);
             await LoadData();
         }
     }

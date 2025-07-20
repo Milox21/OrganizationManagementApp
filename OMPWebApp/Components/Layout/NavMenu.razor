@@ -130,99 +130,267 @@
 
 <Popup @ref=popup Lazy="true" class="my-popup">
     <RadzenStack Orientation="Orientation.Vertical" Gap="0" class="rz-h-100">
-        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Class=" p-3" Style="color: white; background-color:cornflowerblue;">
-            <RadzenText TextStyle="TextStyle.H6" Class="mb-0" Style="color: white;">Notifications</RadzenText>
+        <!-- Header -->
+        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween"
+                     Class="popup-header" AlignItems="AlignItems.Center">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0 popup-title">Notifications</RadzenText>
         </RadzenStack>
 
+        <!-- Content -->
         @if (notifications != null && notifications.Count == 0)
         {
-            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center" Style="min-height: 200px;">
-                <RadzenIcon Icon="notifications_off" Style="font-size: 48px; color: var(--rz-secondary-lighter);" />
-                <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-secondary-light);">No notifications</RadzenText>
+            <RadzenStack AlignItems="AlignItems.Center" JustifyContent="JustifyContent.Center"
+                         Class="empty-state">
+                <RadzenIcon Icon="notifications_off" Class="empty-icon" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="empty-text">No notifications</RadzenText>
             </RadzenStack>
         }
-        else @if (notifications != null)
+        else if (notifications != null)
         {
-            <RadzenDataList AllowVirtualization="true" Data="@notifications"
-            Style="flex: 1; --rz-datalist-padding: 0; --rz-datalist-item-margin-inline: 0; overflow: auto; max-height: 400px;">
+            <RadzenDataList AllowVirtualization="true" Data="@notifications" Class="notification-list">
                 <Template Context="notification">
-                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem" Style="height: 75px; ">
-                        <RadzenStack Gap="0.1rem" Style="flex: 1;">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenIcon Icon="announcement" />
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="@(notification.IsSeen ? "" : "notification-title-unread")">
+                    <div class="notification-item @(notification.IsSeen ? "seen" : "unseen")">
+                        <div class="notification-content">
+                            <div class="notification-header">
+                                <RadzenIcon Icon="announcement" Class="notification-icon" />
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="notification-source">
                                     @notification.NotificationSource
                                 </RadzenText>
-                            </RadzenStack>
-                            <RadzenText TextStyle="TextStyle.Body1">@notification.NotificationText</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                            </div>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="notification-text">
+                                @notification.NotificationText
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Class="notification-date">
                                 @notification.CreationDate.ToString("MMM dd, yyyy HH:mm")
                             </RadzenText>
-                        </RadzenStack>
-                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0">
+                        </div>
+                        <div class="notification-actions">
                             @if (!notification.IsSeen)
                             {
-                                <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="visibility" Click="@(() => MarkAsRead(notification))"
-                                Style="padding: 0; width: 32px; height: 32px;" />
+                                <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="visibility"
+                                              Click="@(() => MarkAsRead(notification))"
+                                              Size="ButtonSize.Small" Class="action-btn" />
                             }
-                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete" Click="@(() => DeleteNotification(notification))"
-                            Style="padding: 0; width: 32px; height: 32px;" />
-                        </RadzenStack>
-                    </RadzenStack>
-
+                            <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="delete"
+                                          Click="@(() => DeleteNotification(notification))"
+                                          Size="ButtonSize.Small" Class="action-btn delete-btn" />
+                        </div>
+                    </div>
                 </Template>
             </RadzenDataList>
         }
         else
         {
-            <div class="p-3">
-                <RadzenText TextStyle="TextStyle.Body1">Loading notifications...</RadzenText>
+            <div class="loading-state">
+                <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                <RadzenText TextStyle="TextStyle.Body2" Class="loading-text">Loading notifications...</RadzenText>
             </div>
         }
     </RadzenStack>
 </Popup>
 
 <style>
-    .PMIinide .rz-navigation-item-link .rz-navigation-item-text {
-       
-    }
-
-    .notification-title-unread {
-    font-weight: bold;
-    }
-
     .my-popup {
-    display: none;
-    position: absolute;
-    overflow: hidden;
-    height: 300px;
-    width: 400px;
-    border: var(--rz-panel-border);
-    background-color: var(--rz-panel-background-color);
-    box-shadow: var(--rz-panel-shadow);
-    border-radius: var(--rz-border-radius)
+        display: none;
+        position: absolute;
+        overflow: hidden;
+        height: 300px;
+        width: 400px;
+        border: var(--rz-panel-border);
+        background-color: var(--rz-panel-background-color);
+        box-shadow: var(--rz-shadow-4);
+        border-radius: var(--rz-border-radius);
+        backdrop-filter: blur(10px);
     }
 
-    .my-popup .rz-datalist {
-    scrollbar-width: thin;
-    scrollbar-color: var(--rz-secondary-lighter) transparent;
+    /* Header */
+    .popup-header {
+        background: linear-gradient(135deg, var(--rz-primary), var(--rz-primary-dark));
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--rz-border-color);
     }
 
-    .my-popup .rz-datalist::-webkit-scrollbar {
-    width: 6px;
+    .popup-title {
+        color: white !important;
+        font-weight: 600;
+        letter-spacing: 0.025em;
     }
 
-    .my-popup .rz-datalist::-webkit-scrollbar-thumb {
-    background-color: var(--rz-secondary-lighter);
-    border-radius: 3px;
+    /* Empty State */
+    .empty-state {
+        flex: 1;
+        padding: 2rem;
+        min-height: 200px;
     }
 
-    .my-popup .rz-datalist::-webkit-scrollbar-track {
-    background: transparent;
+    .empty-icon {
+        font-size: 3rem;
+        color: var(--rz-text-tertiary-color);
+        margin-bottom: 0.5rem;
+        opacity: 0.7;
     }
 
-    .notification-title-unread {
-    font-weight: bold;
+    .empty-text {
+        color: var(--rz-text-secondary-color);
+        font-weight: 500;
+    }
+
+    /* Loading State */
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        gap: 1rem;
+    }
+
+    .loading-text {
+        color: var(--rz-text-secondary-color);
+    }
+
+    /* Notification List */
+    .notification-list {
+        flex: 1;
+        overflow: auto;
+        max-height: 400px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--rz-border-color) transparent;
+        padding: 0;
+    }
+
+        .notification-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list::-webkit-scrollbar-thumb {
+            background-color: var(--rz-border-color);
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+
+            .notification-list::-webkit-scrollbar-thumb:hover {
+                background-color: var(--rz-text-tertiary-color);
+            }
+
+        .notification-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .notification-list .rz-datalist-data li {
+            padding: 0 !important;
+        }
+    /* Notification Items */
+    .notification-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem; /* Add padding back to individual items */
+        border-bottom: 1px solid var(--rz-border-color-light);
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+
+        .notification-item:hover {
+            background-color: var(--rz-base-50);
+        }
+
+        .notification-item.unseen::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--rz-primary), var(--rz-primary-light));
+        }
+
+        .notification-item.unseen {
+            background-color: var(--rz-primary-lighter);
+        }
+
+    .notification-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .notification-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-icon {
+        color: var(--rz-primary);
+        font-size: 1.1rem;
+    }
+
+    .notification-source {
+        font-weight: 600;
+        color: var(--rz-text-color);
+    }
+
+    .notification-item.unseen .notification-source {
+        color: var(--rz-primary-dark);
+    }
+
+    .notification-text {
+        color: var(--rz-text-secondary-color);
+        line-height: 1.4;
+        margin-bottom: 0.25rem;
+    }
+
+    .notification-date {
+        color: var(--rz-text-tertiary-color);
+        font-size: 0.8rem;
+    }
+
+    /* Actions */
+    .notification-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+
+    .notification-item:hover .notification-actions {
+        opacity: 1;
+    }
+
+    .action-btn {
+        width: 2rem !important;
+        height: 2rem !important;
+        min-width: 2rem !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        transition: all 0.2s ease;
+    }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--rz-shadow-2);
+        }
+
+    .delete-btn:hover {
+        background-color: var(--rz-danger-lighter) !important;
+        color: var(--rz-danger) !important;
+    }
+
+    /* Responsive adjustments */
+
+    .notification-item {
+        padding: 0.875rem 1rem;
+    }
+
+    .popup-header {
+        padding: 0.875rem 1rem;
+    }
+
     }
 </style>
 @code {
@@ -311,15 +479,13 @@
     private async Task MarkAsRead(NotificationDTO notification)
     {
         notification.IsSeen = true;
-        await ApiNotificationService.PutResource($"/api/Notification/{notification.Id}", notification);
+        await ApiNotificationService.ExecuteGetRequest($"/api/Notification/Seen/{notification.Id}");
         await LoadNotifications();
     }
 
     private async Task DeleteNotification(NotificationDTO notification)
     {
-        notification.IsDeleted = true;
-        notification.DeleteDate = DateTime.Now;
-        await ApiNotificationService.PutResource($"/api/Notification/{notification.Id}", notification);
+        await ApiNotificationService.ExecuteGetRequest($"/api/Notification/DeleteById/{notification.Id}");
         await LoadNotifications();
     }
 }
