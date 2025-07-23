@@ -1,61 +1,366 @@
-﻿@page "/lol"
+﻿@page "/tasks"
+@using ClassLibrary.DTO
+@using OMPMobileApp.Services
 
-<h1>Weather</h1>
+@inject ApiConnectionService<TaskDTO> ApiTaskService
+@inject AuthorizationService AuthService
+@inject NavigationManager Navigation
 
-<p>This component demonstrates showing data.</p>
+<div class="tasks-container">
+    <div class="tasks-header">
+        <button class="btn-back" @onclick="GoBack" title="Back">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15,18 9,12 15,6" />
+            </svg>
+        </button>
+        <h1 class="page-title">My Tasks</h1>
+    </div>
 
-@if (forecasts == null)
-{
-    <p><em>Loading...</em></p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var forecast in forecasts)
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Loading tasks...</p>
+        </div>
+    }
+    else if (hasError)
+    {
+        <div class="error-container">
+            <h3 class="error-title">Error</h3>
+            <p class="error-message">@errorMessage</p>
+            <button class="btn btn-primary" @onclick="LoadTasks">Retry</button>
+        </div>
+    }
+    else if (!tasks.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="64" height="64">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="6" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+            </div>
+            <h3 class="empty-title">No tasks yet</h3>
+            <p class="empty-subtitle">You're all caught up!</p>
+        </div>
+    }
+    else
+    {
+        <div class="task-list">
+            @foreach (var task in tasks)
             {
-                <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
-                </tr>
+                <div class="task-card @(GetTaskClass(task))" @key="task.Id">
+                    <div class="task-indicator"></div>
+                    <div class="task-content">
+                        <div class="task-header">
+                            <div class="task-title">
+                                <svg class="task-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 11l3 3L22 4"></path>
+                                    <path d="M21 12a9 9 0 1 1-6-8.71" />
+                                </svg>
+                                <span>@task.Title</span>
+                            </div>
+                            <time class="task-time">@task.DeadlineTime.ToString("MMM dd, HH:mm")</time>
+                        </div>
+                        <p class="task-text">@task.Text</p>
+
+                        @if (task.CompletionTime == null)
+                        {
+                            <div class="task-actions">
+                                <button class="btn btn-secondary" @onclick="() => MarkCompleted(task)" disabled="@isProcessing">✅ Complete</button>
+                                <button class="btn btn-danger" @onclick="() => DeleteTask(task)" disabled="@isProcessing">🗑 Delete</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="task-status status-completed">
+                                ✔ Completed @task.CompletionTime?.ToString("MMM dd, HH:mm")
+                            </div>
+                        }
+                    </div>
+                </div>
             }
-        </tbody>
-    </table>
-}
+        </div>
+    }
+</div>
+
+<style>
+    .tasks-container {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .tasks-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+    }
+
+    .btn-back {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 12px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        backdrop-filter: blur(10px);
+    }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .btn-back svg {
+            width: 20px;
+            height: 20px;
+            color: white;
+        }
+
+    .page-title {
+        color: white;
+        font-size: 28px;
+        font-weight: 700;
+        margin: 0;
+        flex: 1;
+    }
+
+    .loading-container,
+    .error-container,
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: white;
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top: 4px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+    }
+
+    .task-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .task-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        overflow: hidden;
+        display: flex;
+        backdrop-filter: blur(10px);
+        transition: 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .task-indicator {
+        width: 4px;
+        background: transparent;
+        transition: background-color 0.3s ease;
+    }
+
+    .task-card.overdue .task-indicator {
+        background: #ef4444;
+    }
+
+    .task-card.pending .task-indicator {
+        background: #f59e0b;
+    }
+
+    .task-card.completed {
+        opacity: 0.75;
+    }
+
+    .task-content {
+        flex: 1;
+        padding: 20px;
+    }
+
+    .task-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .task-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        color: #4c51bf;
+    }
+
+    .task-icon {
+        width: 18px;
+        height: 18px;
+        color: #4c51bf;
+    }
+
+    .task-time {
+        font-size: 13px;
+        color: #64748b;
+    }
+
+    .task-text {
+        font-size: 15px;
+        color: #1e293b;
+        margin: 12px 0;
+    }
+
+    .task-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+    }
+
+    .btn-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .task-status {
+        font-size: 14px;
+        font-weight: 600;
+        color: #10b981;
+        margin-top: 8px;
+    }
+</style>
 
 @code {
-    private WeatherForecast[]? forecasts;
+    List<TaskDTO> tasks = new();
+    bool isLoading = true;
+    bool hasError = false;
+    string errorMessage = "";
+    bool isProcessing = false;
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate asynchronous loading to demonstrate a loading indicator
-        await Task.Delay(500);
-
-        var startDate = DateOnly.FromDateTime(DateTime.Now);
-        var summaries = new[] { "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching" };
-        forecasts = Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        {
-            Date = startDate.AddDays(index),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = summaries[Random.Shared.Next(summaries.Length)]
-        }).ToArray();
+        await LoadTasks();
     }
 
-    private class WeatherForecast
+    private async Task LoadTasks()
     {
-        public DateOnly Date { get; set; }
-        public int TemperatureC { get; set; }
-        public string? Summary { get; set; }
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+        try
+        {
+            isLoading = true;
+            hasError = false;
+            errorMessage = "";
+            StateHasChanged();
+
+            var userId = AuthService?.userDTO?.Id ?? 0;
+            if (userId <= 0)
+                throw new Exception("User not authenticated.");
+
+            var result = await ApiTaskService.GetResources($"/api/Task/GetByUser/{userId}");
+
+            tasks = result?
+                .Where(t => !t.IsDeleted)
+                .OrderByDescending(t => t.CompletionTime != null)
+                .ThenBy(t => t.DeadlineTime)
+                .ToList() ?? new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            hasError = true;
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
     }
+
+    private async Task MarkCompleted(TaskDTO task)
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            task.CompletionTime = DateTime.Now;
+            await ApiTaskService.PutResource($"/api/Task/{task.Id}", task);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to complete task: {ex.Message}";
+            hasError = true;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteTask(TaskDTO task)
+    {
+        if (isProcessing) return;
+
+        try
+        {
+            isProcessing = true;
+            task.IsDeleted = true;
+            task.DeleteDate = DateTime.Now;
+            await ApiTaskService.PutResource($"/api/Task/{task.Id}", task);
+            tasks.Remove(task);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to delete task: {ex.Message}";
+            hasError = true;
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetTaskClass(TaskDTO task)
+    {
+        if (task.CompletionTime != null) return "task-card completed";
+        else if (task.DeadlineTime < DateTime.Now) return "task-card overdue";
+        else return "task-card pending";
+    }
+
+    void GoBack() => Navigation.NavigateTo("/");
 }

@@ -1,0 +1,41 @@
+﻿@page "/send-error"
+
+@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@using Radzen
+
+@inject AuthorizationService AuthService
+@inject ApiConnectionService<ErrorDTO> ErrorService
+@inject NotificationService NotificationService
+
+<RadzenCard Style="max-width: 600px; margin: 2rem auto; padding: 2rem;">
+    <div class="mb-3">
+        <h3>Report an Issue</h3>
+        <p>Please provide details about the issue you're experiencing.</p>
+    </div>
+
+    <RadzenTemplateForm TItem="ErrorDTO" Data="@newError" Submit="SubmitError">
+        <RadzenLabel Text="Topic" />
+        <RadzenTextBox @bind-Value="newError.Topic" Style="width: 100%;" Name="Topic" />
+        <ValidationMessage For="@(() => newError.Topic)" />
+
+        <RadzenLabel Text="Details" Style="margin-top: 1rem;" />
+        <RadzenTextArea @bind-Value="newError.Text" Style="width: 100%; height: 150px;" Name="Text" />
+        <ValidationMessage For="@(() => newError.Text)" />
+
+        <RadzenButton Text="Send" ButtonStyle="ButtonStyle.Primary" Style="margin-top: 1.5rem;" Type="Submit" Icon="send" />
+    </RadzenTemplateForm>
+</RadzenCard>
+
+@code {
+    private ErrorDTO newError = new();
+
+    private async Task SubmitError()
+    {
+        newError.CompanyName = "";
+        newError.CreationDate = DateTime.UtcNow;
+        newError.CustomerId = AuthService.userDTO.CustomerId;
+        await ErrorService.PostResource("api/Error/Post", newError);
+        newError = new();
+    }
+}

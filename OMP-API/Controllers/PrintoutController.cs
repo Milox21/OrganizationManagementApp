@@ -1,7 +1,4 @@
-﻿// ------------------------------
-// ✅ 1. API Controller (PrintoutController.cs)
-// ------------------------------
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Xceed.Words.NET;
 using ClassLibrary.DTO;
 using Xceed.Document.NET;
@@ -68,48 +65,44 @@ namespace OMP_API.Controllers
             doc.ReplaceText("{TotalCost}", dto.Items.Where(i => i.Type == "Cost").Sum(i => i.Brutto ?? 0).ToString("N2"));
             doc.ReplaceText("{NetBalance}", dto.Items.Sum(i => i.Brutto ?? 0).ToString("N2"));
 
-            // Find and replace {table} with actual table
-            var tablePlaceholder = doc.Paragraphs.FirstOrDefault(p => p.Text.Contains("{table}"));
-            if (tablePlaceholder != null)
+            // Create the table
+            var t = doc.AddTable(dto.Items.Count + 1, 6);
+            t.AutoFit = AutoFit.Window;
+
+            // Header style
+            Color headerBg = Color.MidnightBlue;
+            string[] headers = { "Title", "Type", "Brutto", "Netto", "Tax", "Date" };
+
+            for (int col = 0; col < headers.Length; col++)
             {
-                int index = doc.Paragraphs.IndexOf(tablePlaceholder);
-                string before = tablePlaceholder.Text.Split("{table}")[0];
-                string after = tablePlaceholder.Text.Split("{table}").Length > 1 ? tablePlaceholder.Text.Split("{table}")[1] : "";
+                var cell = t.Rows[0].Cells[col];
+                cell.FillColor = headerBg;
+                cell.Paragraphs[0].Append(headers[col])
+                    .FontSize(10)
+                    .Bold()
+                    .Color(Xceed.Drawing.Color.White)
+                    .Alignment = Alignment.center;
+            }
 
-                doc.RemoveParagraph(tablePlaceholder);
+            // Add item rows
+            for (int i = 0; i < dto.Items.Count; i++)
+            {
+                var item = dto.Items[i];
+                t.Rows[i + 1].Cells[0].Paragraphs[0].Append(item.Title ?? "").FontSize(10);
+                t.Rows[i + 1].Cells[1].Paragraphs[0].Append(item.Type ?? "").FontSize(10);
+                t.Rows[i + 1].Cells[2].Paragraphs[0].Append($"{item.Brutto:N2}").FontSize(10);
+                t.Rows[i + 1].Cells[3].Paragraphs[0].Append($"{item.Netto:N2}").FontSize(10);
+                t.Rows[i + 1].Cells[4].Paragraphs[0].Append($"{item.Tax:F2}%").FontSize(10);
+                t.Rows[i + 1].Cells[5].Paragraphs[0].Append(item.CreationDate?.ToString("yyyy-MM-dd") ?? "").FontSize(10);
+            }
 
-                if (!string.IsNullOrWhiteSpace(before))
-                    doc.InsertParagraph(before, false);
-
-                var t = doc.AddTable(dto.Items.Count + 1, 6);
-                t.AutoFit = AutoFit.Window;
-
-                // Header style
-                Color headerBg = Color.MidnightBlue;
-
-                string[] headers = { "Title", "Type", "Brutto", "Netto", "Tax", "Date" };
-                for (int col = 0; col < headers.Length; col++)
+            foreach (var paragraph in doc.Paragraphs.ToList())
+            {
+                if (paragraph.Text.Contains("{table}"))
                 {
-                    var cell = t.Rows[0].Cells[col];
-                    cell.FillColor = headerBg;
-                    cell.Paragraphs[0].Append(headers[col]).FontSize(10).Bold().Color(Xceed.Drawing.Color.White).Alignment = Alignment.center;
+                    paragraph.InsertTableAfterSelf(t);
+                    paragraph.ReplaceText("{table}", "");
                 }
-
-                for (int i = 0; i < dto.Items.Count; i++)
-                {
-                    var item = dto.Items[i];
-                    t.Rows[i + 1].Cells[0].Paragraphs[0].Append(item.Title ?? "").FontSize(10);
-                    t.Rows[i + 1].Cells[1].Paragraphs[0].Append(item.Type ?? "").FontSize(10);
-                    t.Rows[i + 1].Cells[2].Paragraphs[0].Append($"{item.Brutto:N2}").FontSize(10);
-                    t.Rows[i + 1].Cells[3].Paragraphs[0].Append($"{item.Netto:N2}").FontSize(10);
-                    t.Rows[i + 1].Cells[4].Paragraphs[0].Append($"{item.Tax:P1}").FontSize(10);
-                    t.Rows[i + 1].Cells[5].Paragraphs[0].Append(item.CreationDate?.ToString("yyyy-MM-dd") ?? "").FontSize(10);
-                }
-
-                doc.InsertTable(index, t);
-
-                if (!string.IsNullOrWhiteSpace(after))
-                    doc.InsertParagraph(after, false);
             }
 
             using var outputStream = new MemoryStream();

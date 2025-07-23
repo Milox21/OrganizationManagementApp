@@ -34,11 +34,11 @@
                     @if (isEditMode)
                     {
                         <RadzenDropDown TValue="int?"
-                                        @bind-Value="User.CountryId"
-                                        Data="@countries"
-                                        TextProperty="Name"
-                                        ValueProperty="Id"
-                                        Style="width: 100%;" />
+                        @bind-Value="User.CountryId"
+                        Data="@countries"
+                        TextProperty="Name"
+                        ValueProperty="Id"
+                        Style="width: 100%;" />
                     }
                     else
                     {
@@ -83,10 +83,11 @@
         DialogService.Close();
     }
 
-    private async void OnSave()
+    private async Task OnSave()
     {
 
         await ApiServiceUser.ExecuteGetRequest($"/api/User/UpdateCountry/{User.Id}/{User.CountryId}");
+        User.Country = countries.FirstOrDefault(i => i.Id == (int)User.CountryId);
         isEditMode = false;
         
     }

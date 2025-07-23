@@ -214,7 +214,7 @@
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FMSummaryDTO" Property="Tax" Title="Tax %" Width="100px">
                     <Template Context="item">
-                        <span class="text-muted">@($"{item.Tax:P1}")</span>
+                        <span class="text-muted">@($"{item.Tax:F2}%")</span>
                     </Template>
                 </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="FMSummaryDTO" Property="TaxValue" Title="Tax Value" Width="120px">
@@ -302,7 +302,6 @@
             .Where(s => selectedTypes.Contains(s.Type))
             .ToList();
 
-        // Calculate summary totals
         totalIncomeBrutto = filteredSummaryData
         .Where(s => s.Type == "Income")
         .Sum(s => ConvertCurrency(s.Brutto ?? 0, s.CurrencyId));

@@ -70,7 +70,7 @@ namespace OMP_API.Controllers
         }
 
         [HttpPut("Update")]
-        public async Task<IActionResult> Update( [FromBody] InvoiceCostDTO dto)
+        public async Task<IActionResult> Update([FromBody] InvoiceCostDTO dto)
         {
             var entity = await _context.InvoiceCosts.FindAsync(dto.Id);
             if (entity == null || entity.IsDeleted) return NotFound();
@@ -100,6 +100,46 @@ namespace OMP_API.Controllers
             entity.DeleteDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("MakeReccuring")]
+        public async Task<IActionResult> MakeReccuring([FromBody] ReccuringCostInvoiceDTO item)
+        {
+            var newInvoice = new ReccuringCostInvoice
+            {
+                InvoiceId = item.InvoiceId,
+                Description = item.Description,
+                Frequency = item.Frequency,
+                NextDueDate = DateTime.UtcNow,
+                CreationDate = item.CreationDate,
+                DeleteDate = item.DeleteDate,
+                IsDeleted = item.IsDeleted,
+            };
+
+            await _context.ReccuringCostInvoices.AddAsync(newInvoice);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("GetReccuring")]
+        public async Task<ActionResult<IEnumerable<ReccuringCostInvoiceDTO>>> GetReccuring()
+        {
+
+            var items = await _context.ReccuringCostInvoices
+               .Where(item => !item.IsDeleted)
+               .Select(item => new ReccuringCostInvoiceDTO
+               {
+                   InvoiceId = item.InvoiceId,
+                   Description = item.Description,
+                   Frequency = item.Frequency,
+                   NextDueDate = DateTime.UtcNow,
+                   CreationDate = item.CreationDate,
+                   DeleteDate = item.DeleteDate,
+                   IsDeleted = item.IsDeleted
+               })
+               .ToListAsync();
+
+            return Ok(items);
         }
     }
 }

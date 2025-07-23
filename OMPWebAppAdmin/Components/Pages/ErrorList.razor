@@ -1,0 +1,56 @@
+﻿@page "/error-list"
+
+@using ClassLibrary.DTO
+@using OMPWebAppAdmin.Services
+@using Radzen
+
+@inject ApiConnectionService<ErrorDTO> ErrorService
+@inject NotificationService NotificationService
+
+<RadzenCard Style="margin: 2rem;">
+    <div class="mb-3">
+        <h3>Reported Errors</h3>
+        <p>All submitted error reports with company information.</p>
+    </div>
+
+    <RadzenDataGrid Data="@errors" TItem="ErrorDTO" RowHover="true" AllowSorting="true" AllowPaging="true" PageSize="10">
+        <Columns>
+            <RadzenDataGridColumn TItem="ErrorDTO" Property="Topic" Title="Topic" />
+            <RadzenDataGridColumn TItem="ErrorDTO" Property="Text" Title="Details" />
+            <RadzenDataGridColumn TItem="ErrorDTO" Property="CompanyName" Title="Company" />
+            <RadzenDataGridColumn TItem="ErrorDTO" Property="CreationDate" Title="Created">
+                <Template Context="e">
+                    @e.CreationDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="ErrorDTO" Title="Delete" Width="80px">
+                <Template Context="e">
+                    <RadzenButton Icon="delete"
+                    ButtonStyle="ButtonStyle.Danger"
+                    Size="ButtonSize.Small"
+                    Click="@(() => DeleteError(e.Id))" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@code {
+    private List<ErrorDTO>? errors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadErrors();
+    }
+
+    private async Task LoadErrors()
+    {
+        errors = await ErrorService.GetResources("api/Error/GetAll");
+    }
+
+    private async Task DeleteError(int id)
+    {
+        await ErrorService.DeleteResource($"api/Error/{id}");
+        await LoadErrors();
+    }
+}

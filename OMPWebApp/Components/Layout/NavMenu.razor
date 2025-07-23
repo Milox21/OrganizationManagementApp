@@ -34,97 +34,87 @@
     </RadzenStack>
 </RadzenHeader>
 <RadzenSidebar Responsive="false" Style="width: max-content">
-    <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="false">
+    <RadzenPanelMenu DisplayStyle="@(sidebarExpanded ? MenuItemDisplayStyle.IconAndText : MenuItemDisplayStyle.Icon)" ShowArrow="true">
 
-        <div onclick="document.querySelector('.navbar-toggler').click()">
+        <NavLink href="/" style="text-decoration: none; color: inherit;">
+            <RadzenPanelMenuItem Text="Home" Icon="home" />
+        </NavLink>
 
-            <NavLink style="text-decoration: none; color:black;" href="" Match="NavLinkMatch.All">
-                <RadzenPanelMenuItem Text="Home" Icon="home" />
-            </NavLink>
+        <NavLink href="send-error" style="text-decoration: none; color: inherit;">
+            <RadzenPanelMenuItem Text="Error Reporting" Icon="bug_report" />
+        </NavLink>
 
-            @if (AuthorizationService.userDTO.Role == "Manager")
+        @if (AuthorizationService.userDTO.Role == "Manager")
+        {
+            <RadzenPanelMenuItem Text="Manager Panel" Icon="supervisor_account">
+                <NavLink href="useradmin" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="Company Users" Icon="group" />
+                </NavLink>
+                <NavLink href="groups" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="Company Groups" Icon="groups" />
+                </NavLink>
+                <NavLink href="special_groups" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="Special Groups" Icon="group_work" />
+                </NavLink>
+                <NavLink href="constants" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="Constants" Icon="settings" />
+                </NavLink>
+            </RadzenPanelMenuItem>
+        }
+
+        <RadzenPanelMenuItem Text="Groups" Icon="layers">
+            @foreach (var group in groups)
             {
+                <NavLink href="@($"group/{group.Id}")" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark" />
+                </NavLink>
+            }
+        </RadzenPanelMenuItem>
 
-                <RadzenPanelMenuItem Text="Manager Panel" Icon="auto_awesome">
-                    <NavLink style="text-decoration: none;" href="useradmin" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="Company Users" Icon="pageview" />
+        <RadzenPanelMenuItem Text="Special Groups" Icon="label">
+            @foreach (var group in specialgroups)
+            {
+                <NavLink href="@($"specialgroup/{group.Id}")" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark_border" />
+                </NavLink>
+            }
+        </RadzenPanelMenuItem>
+
+        @if (modules.Any(m => m.Id == 1))
+        {
+            <RadzenPanelMenuItem Text="@modules.FirstOrDefault(m => m.Id == 1)?.Name" Icon="account_balance">
+                <RadzenPanelMenuItem Text="Financial Constants" Icon="tune">
+                    <NavLink href="fm_tax_rates" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Tax Rates" Icon="percent" />
                     </NavLink>
-
-                    <NavLink style="text-decoration: none;" href="groups" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="Company Groups" Icon="pageview" />
+                    <NavLink href="fm_contracts" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Contract Types" Icon="description" />
                     </NavLink>
-
-                    <NavLink style="text-decoration: none;" href="special_groups" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="Company Special Groups" Icon="pageview" />
+                    <NavLink href="fm_currencies" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Currencies" Icon="attach_money" />
                     </NavLink>
-
-                    <NavLink style="text-decoration: none;" href="constants" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="Company Constants" Icon="pageview" />
-                    </NavLink>
-
                 </RadzenPanelMenuItem>
 
-            }
-
-            <RadzenPanelMenuItem Text="Groups" Icon="dashboard" Click="@LoadData">
-                @foreach (GroupDTO group in groups)
-                {
-                    <NavLink style="text-decoration: none;" href="@($"group/{group.Id}")" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark" />
+                <RadzenPanelMenuItem Text="Financial Records" Icon="receipt_long">
+                    <NavLink href="fm_invoiceincome" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Income Invoice" Icon="trending_up" />
                     </NavLink>
-                }
-            </RadzenPanelMenuItem>
-
-            <RadzenPanelMenuItem Text="Special Groups" Icon="dashboard" Click="@LoadData">
-                @foreach (SpecialGroupDTO group in specialgroups)
-                {
-                    <NavLink style="text-decoration: none;" href="@($"specialgroup/{group.Id}")" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="@group.Title" Icon="bookmark" />
+                    <NavLink href="fm_invoicecost" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Cost Invoice" Icon="trending_down" />
                     </NavLink>
-                }
-            </RadzenPanelMenuItem>
-
-            @if (modules.Any(m => m.Id == 1))
-            {
-                <RadzenPanelMenuItem Text="@modules.Where(m => m.Id == 1).FirstOrDefault().Name" Icon="dashboard" >
-                    <RadzenPanelMenuItem Text="Financial Constants" Icon="dashboard" class="PMIinide">
-                        <NavLink style="text-decoration: none;" href="fm_tax_rates" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Tax Rates" Icon="pageview" />
-                        </NavLink>
-
-                        <NavLink style="text-decoration: none;" href="fm_contracts" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Contract types" Icon="pageview" />
-                        </NavLink>
-
-                        <NavLink style="text-decoration: none;" href="fm_currencies" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Currencies" Icon="pageview" />
-                        </NavLink>
-                    </RadzenPanelMenuItem>
-
-                    <RadzenPanelMenuItem Text="Invoices, Debit Notes & Payroll" Icon="dashboard">
-                        <NavLink style="text-decoration: none;" href="fm_invoiceincome" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Income Invoice" Icon="pageview" />
-                        </NavLink>
-
-                        <NavLink style="text-decoration: none;" href="fm_invoicecost" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Cost Invoice " Icon="pageview" />
-                        </NavLink>
-
-                        <NavLink style="text-decoration: none;" href="fm_payroll" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Payroll" Icon="pageview" />
-                        </NavLink>
-
-                        <NavLink style="text-decoration: none;" href="fm_debitnote" Match="NavLinkMatch.All">
-                            <RadzenPanelMenuItem Text="Debit Note" Icon="pageview" />
-                        </NavLink>
-                    </RadzenPanelMenuItem>
-
-                    <NavLink style="text-decoration: none;" href="fm_summary" Match="NavLinkMatch.All">
-                        <RadzenPanelMenuItem Text="Summary" Icon="pageview" />
+                    <NavLink href="fm_payroll" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Payroll" Icon="payments" />
+                    </NavLink>
+                    <NavLink href="fm_debitnote" style="text-decoration: none; color: inherit;">
+                        <RadzenPanelMenuItem Text="Debit Note" Icon="money_off" />
                     </NavLink>
                 </RadzenPanelMenuItem>
-            }
-        </div>
+
+                <NavLink href="fm_summary" style="text-decoration: none; color: inherit;">
+                    <RadzenPanelMenuItem Text="Summary" Icon="bar_chart" />
+                </NavLink>
+            </RadzenPanelMenuItem>
+        }
     </RadzenPanelMenu>
 </RadzenSidebar>
 
@@ -423,7 +413,7 @@
 
     public async Task NewProfileDialog()
     {
-        await DialogService.OpenAsync<ProfileDialog>
+        var result = await DialogService.OpenAsync<ProfileDialog>
         (
             "Profile",
             new Dictionary<string, object>
@@ -435,6 +425,12 @@
                     Width = "700px",
                     Height = "512px"
                 });
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
 

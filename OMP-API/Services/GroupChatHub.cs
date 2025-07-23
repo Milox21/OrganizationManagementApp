@@ -17,7 +17,6 @@ public class GroupChatHub : Hub
 
     public async Task SendMessage(GroupMessageDTO messageDTO)
     {
-        // Step 1: Save to database
         var message = new OMP_API.Models.GroupMessage
         {
             Text = messageDTO.Text,
@@ -32,7 +31,6 @@ public class GroupChatHub : Hub
         _context.GroupMessages.Add(message);
         await _context.SaveChangesAsync();
 
-        // Step 2: Rebuild the DTO with related user/group info
         var user = await _context.Users.FindAsync(message.UserId);
         var group = await _context.Groups.FindAsync(message.GroupId);
 

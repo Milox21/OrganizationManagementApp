@@ -31,6 +31,7 @@ builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.MapHub<GroupChatHub>("/groupchathub");
+app.MapHub<TaskChatHub>("/taskchathub");
 
 using (var scope = app.Services.CreateScope())
 {

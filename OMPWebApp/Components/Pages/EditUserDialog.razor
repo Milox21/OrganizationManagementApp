@@ -12,9 +12,9 @@
         <RadzenLabel Text="Surname" Style="margin-top: 10px;" />
         <RadzenTextBox @bind-Value="user.Surname" Placeholder="Enter Surname" Style="width: 100%;" />
 
-        <RadzenLabel Text="Select Value" Component="DropDownVirtualization" />
+        <RadzenLabel Text="Position" Component="DropDownVirtualization" />
         <RadzenDropDown AllowClear="true" @bind-Value="user.PositionId" AllowVirtualization="true" Name="DropDownVirtualization"
-                        AllowFiltering="true" Data=@positions TextProperty="@nameof(PositionDTO.Name)" ValueProperty="@nameof(PositionDTO.Id)" Style="width: 100%;" />
+        AllowFiltering="true" Data=@positions TextProperty="@nameof(PositionDTO.Name)" ValueProperty="@nameof(PositionDTO.Id)" Style="width: 100%;" />
     </RadzenFieldset>
 
     <div style="text-align: center; margin-top: 20px;">
@@ -30,7 +30,7 @@
     private async Task SaveCustomer()
     {
         user.EditDate = DateTime.Now;
-        await ApiServiceCustomer.PutResource($"/api/User/{user.Id}", user);
+        await ApiServiceCustomer.ExecuteGetRequest($"/api/User/Simple/{user.Id}/{user.Name}/{user.Surname}/{user.PositionId}");
 
         DialogService.Close(true);
     }

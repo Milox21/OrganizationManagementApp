@@ -7,6 +7,8 @@
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
 @inject ApiConnectionService<InvoiceTaxRateDTO> ApiServiceTax
 @inject AuthorizationService AuthService
+@inject DialogService DialogService
+
 <RadzenCard>
     <h4>Add New Invoice (Income)</h4>
 
@@ -209,9 +211,23 @@
         await LoadData();
     }
 
-    private void MakeRecurring(InvoiceIncomeDTO cost)
+    private async Task MakeRecurring(InvoiceIncomeDTO income)
     {
-        // Tu dodaj logikę do oznaczenia faktury jako cyklicznej (lub przekierowanie itp.)
-        Console.WriteLine($"Make recurring for: {cost.Name}");
+        var result = await DialogService.OpenAsync<ReccuringIncomeDialog>("Make Recurring",
+            new Dictionary<string, object>()
+                    {
+                    {"model", income }
+                    },
+            new DialogOptions()
+                {
+                    Width = "700px",
+                    Height = "500px"
+                });
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 }

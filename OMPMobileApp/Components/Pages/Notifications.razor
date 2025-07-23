@@ -7,7 +7,6 @@
 @inject NavigationManager Navigation
 
 <div class="notifications-container">
-    <!-- Header -->
     <div class="notifications-header">
         <button class="btn-back" @onclick="GoBack" title="Back">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -21,7 +20,6 @@
         }
     </div>
 
-    <!-- Loading State -->
     @if (isLoading)
     {
         <div class="loading-container">
@@ -104,7 +102,6 @@
         }
     </div>
 
-    <!-- Mark All as Read Button -->
     @if (notifications.Any(n => !n.IsSeen))
     {
         <div class="bulk-actions">
@@ -454,12 +451,10 @@
             note.IsSeen = true;
             await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
 
-            // Update local state instead of reloading all notifications
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            // Revert the change if API call failed
             note.IsSeen = false;
             errorMessage = $"Failed to mark notification as seen: {ex.Message}";
             hasError = true;
@@ -482,15 +477,13 @@
 
             note.IsDeleted = true;
             note.DeleteDate = DateTime.Now;
-            await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
+            await ApiNotificationService.ExecuteGetRequest($"/api/Notification/DeleteById/{note.Id}");
 
-            // Remove from local list
             notifications.Remove(note);
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            // Revert the change if API call failed
             note.IsDeleted = false;
             note.DeleteDate = null;
             errorMessage = $"Failed to delete notification: {ex.Message}";
@@ -517,7 +510,7 @@
             foreach (var note in unseenNotifications)
             {
                 note.IsSeen = true;
-                await ApiNotificationService.PutResource($"/api/Notification/{note.Id}", note);
+                await ApiNotificationService.ExecuteGetRequest($"/api/Notification/Seen/{note.Id}");
             }
 
             StateHasChanged();

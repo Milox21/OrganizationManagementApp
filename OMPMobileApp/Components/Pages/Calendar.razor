@@ -596,7 +596,7 @@ else
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
         }
 
-    /* Responsive Design */
+  
 
         .appointment-card {
             padding: 20px 16px;
@@ -656,7 +656,6 @@ else
                 throw new InvalidOperationException("User not authenticated. Please log in again.");
             }
 
-            // Call API with the selected date
             var dateString = selectedDate.ToString("yyyy-MM-dd");
             var tasks = await ApiTaskService.GetResources($"/api/Task/GetByUserAndDate/{AuthService.userDTO.Id}/{dateString}");
 
@@ -669,7 +668,6 @@ else
                     if (item.DeadlineTime == default || string.IsNullOrWhiteSpace(item.Title))
                         continue;
 
-                    // Only include tasks for the selected date
                     if (item.DeadlineTime.Date == selectedDate.Date)
                     {
                         appointments.Add(new Appointment

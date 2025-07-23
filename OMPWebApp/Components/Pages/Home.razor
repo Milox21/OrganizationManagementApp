@@ -69,10 +69,13 @@ SelectedIndex="2">
             {"task", task }
                             },
         new DialogOptions()
-            {
-                Width = "700px",
-                Height = "600px"
-            });
+            { Width = "1200px", Height = "660px" });
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async Task LoadData()

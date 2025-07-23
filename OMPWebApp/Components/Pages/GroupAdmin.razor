@@ -58,18 +58,23 @@
 
     public async Task NewGroupDialog()
     {
-        await DialogService.OpenAsync<AddGroupDialog>("Add Group", new Dictionary<string, object>(), new DialogOptions()
+        var result = await DialogService.OpenAsync<AddGroupDialog>("Add Group", new Dictionary<string, object>(), new DialogOptions()
             {
  
                 Width = "700px",
-                Height = "512px"
+                Height = "400px"
             });
-        await LoadData();
+
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async Task EditGroupDialog(GroupDTO group)
     {
-        await DialogService.OpenAsync<EditGroupDialog>("Edit Group",
+        var result = await DialogService.OpenAsync<EditGroupDialog>("Edit Group",
         new Dictionary<string, object>()
                     {
             {"group", group },
@@ -77,14 +82,18 @@
         new DialogOptions()
             {
                 Width = "700px",
-                Height = "512px"
+                Height = "400px"
             });
-        await LoadData();
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async Task ManageGroup(GroupDTO group)
     {
-        await DialogService.OpenAsync<ManageGroupDialog>("Manage Group",
+        var result = await DialogService.OpenAsync<ManageGroupDialog>("Manage Group",
         new Dictionary<string, object>()
                         {
             {"group", group },
@@ -92,9 +101,13 @@
         new DialogOptions()
             {
                 Width = "1000px",
-                Height = "512px"
+                Height = "400px"
             });
-        await LoadData();
+        if (result == true)
+        {
+            await LoadData();
+            StateHasChanged();
+        }
     }
 
     private async Task DeleteUser(GroupDTO group)

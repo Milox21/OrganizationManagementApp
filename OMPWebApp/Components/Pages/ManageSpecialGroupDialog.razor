@@ -11,11 +11,11 @@
     <h3>Change Special Group Owner</h3>
     <div class="mb-3">
         <RadzenDropDown @bind-Value="selectedUserId"
-                        Data="allUsers"
-                        ValueProperty="Id"
-                        TextProperty="Name"
-                        Placeholder="Select a user"
-                        Class="w-100">
+        Data="allUsers"
+        ValueProperty="Id"
+        TextProperty="Name"
+        Placeholder="Select a user"
+        Class="w-100">
             <Template Context="user">
                 @((user as UserDTO).Name) @((user as UserDTO).Surname)
             </Template>
@@ -23,18 +23,19 @@
     </div>
     <div class="d-flex justify-content-between">
         <RadzenButton Text="Make Owner"
-                      Click="MakeUserOwner"
-                      ButtonStyle="ButtonStyle.Primary"
-                      Disabled="@(selectedUserId == null)" />
+        Click="MakeUserOwner"
+        ButtonStyle="ButtonStyle.Primary"
+        Disabled="@(selectedUserId == null)" />
         <RadzenButton Text="Close"
-                      Click="Close"
-                      ButtonStyle="ButtonStyle.Light" />
+        Click="Close"
+        ButtonStyle="ButtonStyle.Light" />
     </div>
 </RadzenCard>
 
 @code {
     [Parameter] public SpecialGroupDTO group { get; set; }
     private List<UserDTO> allUsers = new();
+    private UserDTO adminuser;
     private int? selectedUserId;
 
     protected override async Task OnInitializedAsync()
@@ -45,6 +46,11 @@
     private async Task LoadData()
     {
         allUsers = await ApiServiceUser.GetResources($"/api/User/GetByCustomer/{AuthService.userDTO.CustomerId}");
+        adminuser = await ApiServiceUser.GetResource($"/api/SpecialGroup/GetAdmin/{group.Id}");
+        if (adminuser != null)
+        {
+            selectedUserId = adminuser.Id;
+        }
     }
 
     private async Task MakeUserOwner()
@@ -53,6 +59,7 @@
             return;
 
         await ApiServiceGroup.ExecuteGetRequest($"/api/SpecialGroup/AddAdmin/{group.Id}/{selectedUserId}");
+        Close();
     }
 
     private void Close()

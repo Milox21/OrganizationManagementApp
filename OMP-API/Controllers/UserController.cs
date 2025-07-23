@@ -59,12 +59,38 @@ namespace OMP_API.Controllers
             item.Name = entity.Name;
             item.Surname = entity.Surname;
             item.PositionId = entity.PositionId;
-            item.CountryId = entity.CountryId;
+            if (entity.CountryId != 0)
+            {
+                item.CountryId = entity.CountryId;
+            }
+
             item.EditDate = entity.EditDate;
 
             item.DeleteDate = entity.DeleteDate;
             item.IsDeleted = entity.IsDeleted;
 
+            await _context.SaveChangesAsync();
+
+
+            return Ok("entity updated successfully");
+        }
+
+        [HttpGet("Simple/{id}/{name}/{surname}/{positionid}")]
+        public async Task<ActionResult> StupidUpdateAsync(int id, string name, string surname, int positionid)
+        {
+
+            var item = await _context.Users
+                                     .FirstOrDefaultAsync(e => e.Id == id && e.IsDeleted == false);
+
+            if (item == null)
+            {
+                return NotFound();
+            }
+
+            item.Name = name;
+            item.Surname = surname;
+            item.PositionId = positionid;
+            item.EditDate = DateTime.Now;
             await _context.SaveChangesAsync();
 
 

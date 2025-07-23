@@ -88,7 +88,7 @@ namespace OMP_API.Controllers
             entity.PriceNetto = dto.PriceNetto;
             entity.CurrencyId = dto.CurrencyId;
             entity.VatTaxRate = dto.VatTaxRate;
-            entity.VatTaxRate = dto.VatTaxRate ;
+            entity.VatTaxRate = dto.VatTaxRate;
             entity.VatTaxValue = dto.VatTaxValue;
             entity.ValueBrutto = dto.ValueBrutto;
             entity.EditDate = DateTime.UtcNow;
@@ -108,6 +108,46 @@ namespace OMP_API.Controllers
             entity.DeleteDate = DateTime.UtcNow;
             await _context.SaveChangesAsync();
             return NoContent();
+        }
+
+        [HttpPost("MakeReccuring")]
+        public async Task<IActionResult> MakeReccuring([FromBody] ReccuringIncomeInvoiceDTO item)
+        {
+            var newInvoice = new ReccuringIncomeInvoice
+            {
+                InvoiceId = item.InvoiceId,
+                Description = item.Description,
+                Frequency = item.Frequency,
+                NextDueDate = DateTime.UtcNow,
+                CreationDate = item.CreationDate,
+                DeleteDate = item.DeleteDate,
+                IsDeleted = item.IsDeleted
+            };
+
+            await _context.ReccuringIncomeInvoices.AddAsync(newInvoice);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
+
+        [HttpPost("GetReccuring")]
+        public async Task<ActionResult<IEnumerable<ReccuringIncomeInvoiceDTO>>> GetReccuring()
+        {
+
+            var items = await _context.ReccuringIncomeInvoices
+               .Where(item => !item.IsDeleted)
+               .Select(item => new ReccuringIncomeInvoiceDTO
+               {
+                   InvoiceId = item.InvoiceId,
+                   Description = item.Description,
+                   Frequency = item.Frequency,
+                   NextDueDate = DateTime.UtcNow,
+                   CreationDate = item.CreationDate,
+                   DeleteDate = item.DeleteDate,
+                   IsDeleted = item.IsDeleted
+               })
+               .ToListAsync();
+
+            return Ok(items);
         }
     }
 }

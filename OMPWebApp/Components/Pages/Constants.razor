@@ -9,60 +9,74 @@
 
 <RadzenSplitter Orientation="Orientation.Vertical">
     <RadzenCard>
-    <RadzenSplitterPane Size="50%">
-        <h3>Positions</h3>
-        <div style="display: flex; gap: 2rem; align-items: flex-start;">
+        <RadzenSplitterPane Size="50%">
+            <h3>Positions</h3>
+            <div style="display: flex; gap: 2rem; align-items: flex-start;">
                 <RadzenDataGrid TItem="PositionDTO" Data="@positions" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" PageSize="5" AllowSorting="true">
-                <Columns>
-                    <RadzenDataGridColumn TItem="PositionDTO" Property="Name" Title="Name" />
-                    <RadzenDataGridColumn TItem="PositionDTO" Property="Description" Title="Description" />
-                    <RadzenDataGridColumn TItem="PositionDTO" Title="Delete">
-                        <Template Context="data">
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeletePosition(data))" />
-                        </Template>
-                    </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
+                    <Columns>
+                        <RadzenDataGridColumn TItem="PositionDTO" Property="Name" Title="Name" />
+                        <RadzenDataGridColumn TItem="PositionDTO" Property="Description" Title="Description" />
+                        <RadzenDataGridColumn TItem="PositionDTO" Title="Edit" Width="50px">
+                            <Template Context="data">
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="@(() => EditPosition(data))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="PositionDTO" Title="Delete" Width="50px">
+                            <Template Context="data">
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@(() => DeletePosition(data))" />
+                            </Template>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
 
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
-                <RadzenTextBox Placeholder="Name" @bind-Value="@newPositionName" />
-                <RadzenTextBox Placeholder="Description" @bind-Value="@newPositionDescription" />
-                <RadzenButton Text="Add Position" Click="AddPosition" />
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
+                    <RadzenTextBox Placeholder="Name" @bind-Value="@newPositionName" />
+                    <RadzenTextBox Placeholder="Description" @bind-Value="@newPositionDescription" />
+
+                    @if (isEditMode)
+                    {
+                        <RadzenButton Text="Save" Click="SavePosition" ButtonStyle="ButtonStyle.Primary" />
+                        <RadzenButton Text="Cancel" Click="CancelEdit" ButtonStyle="ButtonStyle.Light" />
+                    }
+                    else
+                    {
+                        <RadzenButton Text="Add Position" Click="AddPosition" />
+                    }
+                </div>
             </div>
-        </div>
-    </RadzenSplitterPane>
+        </RadzenSplitterPane>
     </RadzenCard>
     <RadzenCard Style="margin-top: 20px;">
-    <RadzenSplitterPane Size="50%">
-        <h3>Countries</h3>
-        <div style="display: flex; gap: 2rem; align-items: flex-start;">
-            <RadzenDataGrid TItem="CountryDTO" PageSize="5"  Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" AllowSorting="true">
-                <Columns>
-                    <RadzenDataGridColumn TItem="CountryDTO" Property="Name" Title="Name" />
-                    <RadzenDataGridColumn TItem="CountryDTO" Property="Description" Title="Continent" />
-                </Columns>
-            </RadzenDataGrid>
+        <RadzenSplitterPane Size="50%">
+            <h3>Countries</h3>
+            <div style="display: flex; gap: 2rem; align-items: flex-start;">
+                <RadzenDataGrid TItem="CountryDTO" PageSize="5" Data="@countries" Editable="true" Style="width: 60%;" AllowFiltering="true" AllowPaging="true" AllowSorting="true">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="CountryDTO" Property="Name" Title="Name" />
+                        <RadzenDataGridColumn TItem="CountryDTO" Property="Description" Title="Continent" />
+                    </Columns>
+                </RadzenDataGrid>
 
-            <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
-                <RadzenButton Text="Refresh" Click="RefreshCountries" />
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; width: 30%;">
+                    <RadzenButton Text="Refresh" Click="RefreshCountries" />
+                </div>
             </div>
-        </div>
-    </RadzenSplitterPane>
+        </RadzenSplitterPane>
     </RadzenCard>
 </RadzenSplitter>
 
-@code
-{
+@code {
     private List<PositionDTO> positions = new();
     private List<CountryDTO> countries = new();
 
     private string newPositionName;
     private string newPositionDescription;
+    private PositionDTO editingPosition;
+    private bool isEditMode = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
-
     }
 
     private async Task LoadData()
@@ -74,14 +88,50 @@
     private async Task AddPosition()
     {
         PositionDTO position = new()
-        {
+            {
                 Name = newPositionName,
                 Description = newPositionDescription,
                 CustomerId = AuthService.userDTO.CustomerId
-        };
+            };
 
         await ApiServicePosition.PostResource($"/api/Position", position);
         await LoadData();
+        ResetForm();
+    }
+
+    private void EditPosition(PositionDTO position)
+    {
+        editingPosition = position;
+        newPositionName = position.Name;
+        newPositionDescription = position.Description;
+        isEditMode = true;
+    }
+
+    private async Task SavePosition()
+    {
+        if (editingPosition != null)
+        {
+            editingPosition.Name = newPositionName;
+            editingPosition.Description = newPositionDescription;
+            editingPosition.EditDate = DateTime.Now;
+
+            await ApiServicePosition.PutResource($"/api/Position/{editingPosition.Id}", editingPosition);
+            await LoadData();
+            ResetForm();
+        }
+    }
+
+    private void CancelEdit()
+    {
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        newPositionName = string.Empty;
+        newPositionDescription = string.Empty;
+        editingPosition = null;
+        isEditMode = false;
     }
 
     private async Task DeletePosition(PositionDTO position)

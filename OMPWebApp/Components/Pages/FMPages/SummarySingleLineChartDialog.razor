@@ -4,6 +4,8 @@
 @inject NavigationManager NavManager
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
 
+
+
 <RadzenCard>
     <h3>Monthly Financial Chart</h3>
 
@@ -41,6 +43,8 @@
     [Parameter] public List<FMSummaryDTO> SummaryItems { get; set; } = new();
     [Parameter] public DateTime startDate { get; set; } = new();
     [Parameter] public DateTime endDate { get; set; } = new();
+
+
 
     private List<MonthlySummary> ChartData = new();
 

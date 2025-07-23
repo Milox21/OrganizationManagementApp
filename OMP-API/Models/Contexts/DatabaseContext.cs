@@ -85,6 +85,18 @@ public partial class DatabaseContext : IdentityDbContext<IdentityUser>
     {
         base.OnModelCreating(modelBuilder);
 
+        modelBuilder.Entity<TaskMessage>(entity =>
+        {
+            entity.HasOne(d => d.UserSender)
+                .WithMany()
+                .HasForeignKey(d => d.UserSenderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Task)
+                .WithMany()
+                .HasForeignKey(d => d.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         modelBuilder.Entity<ContractType>(entity =>
         {

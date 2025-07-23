@@ -2,7 +2,8 @@
 @using ClassLibrary.DTO
 @using OMPWebApp.Services
 @inject ApiConnectionService<CurrencyDTO> ApiServiceCurrency
-
+@inject ApiConnectionService<ReccuringCostInvoiceDTO> ApiServiceRecurringCosts
+@inject ApiConnectionService<ReccuringIncomeInvoiceDTO> ApiServiceRecurringIncomes
 <RadzenCard>
     <h3>Monthly Financial Balance Chart</h3>
 
@@ -10,11 +11,11 @@
         <div class="col-md-3">
             <RadzenLabel Text="Display Currency" />
             <RadzenDropDown @bind-Value="selectedCurrencyCode"
-                            Data="@currencies"
-                            TextProperty="Code"
-                            ValueProperty="Code"
-                            Style="width: 100%;"
-                            Change="@OnCurrencyChanged" />
+            Data="@currencies"
+            TextProperty="Code"
+            ValueProperty="Code"
+            Style="width: 100%;"
+            Change="@OnCurrencyChanged" />
         </div>
     </div>
 
@@ -51,6 +52,9 @@
     [Parameter] public DateTime startDate { get; set; } = new();
     [Parameter] public DateTime endDate { get; set; } = new();
 
+    public List<ReccuringCostInvoiceDTO> RecurringCosts;
+    public List<ReccuringIncomeInvoiceDTO> RecurringIncomes;
+
     private List<CurrencyDTO> currencies = new();
     private string selectedCurrencyCode = "USD";
     private CurrencyDTO? selectedCurrency;
@@ -69,6 +73,9 @@
     protected override async Task OnInitializedAsync()
     {
         currencies = await ApiServiceCurrency.GetResources("/api/Currency");
+        RecurringCosts = await ApiServiceRecurringCosts.GetResources("/api/RecurringCostInvoice");
+        RecurringIncomes = await ApiServiceRecurringIncomes.GetResources("/api/RecurringIncomeInvoice");
+
         selectedCurrency = currencies.FirstOrDefault(c => c.Code == selectedCurrencyCode);
         CalculateChartData();
     }
@@ -133,7 +140,7 @@
             Payroll = payrollByMonth.TryGetValue(month, out var payroll) ? payroll : 0,
             DebitNote = debitByMonth.TryGetValue(month, out var debit) ? debit : 0
         })
-    .Where(mb => mb.Income != 0 || mb.Cost != 0 || mb.Payroll != 0 || mb.DebitNote != 0) // 🔥 Only include if at least one value is non-zero
+    .Where(mb => mb.Income != 0 || mb.Cost != 0 || mb.Payroll != 0 || mb.DebitNote != 0) 
     .ToList();
     }
 

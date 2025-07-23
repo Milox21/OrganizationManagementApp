@@ -1,0 +1,39 @@
+﻿@using ClassLibrary.DTO
+@using OMPWebApp.Services
+@inject DialogService DialogService
+@inject ApiConnectionService<ReccuringCostInvoiceDTO> ApiServiceInvoice
+
+<RadzenTemplateForm Data="@reccuringmodel" TItem="ReccuringCostInvoiceDTO">
+    <div class="p-3">
+        <RadzenLabel Text="Description" />
+        <RadzenTextBox @bind-Value="reccuringmodel.Description" Style="width:100%;" />
+
+        <RadzenLabel Text="Frequency (How much per month)" Style="margin-top: 1rem;" />
+        <RadzenNumeric @bind-Value="Frequency" Style="width:100%;" />
+
+        <RadzenLabel Text="End Time (Optional)" Style="margin-top: 1rem;" />
+        <RadzenDatePicker @bind-Value="reccuringmodel.DeleteDate" Style="width:100%;" />
+    </div>
+</RadzenTemplateForm>
+
+<RadzenButton Text="Save" Click="() => OnSubmit()" ButtonStyle="ButtonStyle.Primary" Style="margin-top: 1.5rem;" />
+
+@code {
+    [Parameter] public InvoiceCostDTO? model { get; set; }
+    private int Frequency = new();
+    private ReccuringCostInvoiceDTO reccuringmodel = new();
+
+    protected override async Task OnInitializedAsync()
+    { 
+
+    }
+    private async Task OnSubmit()
+    {
+        reccuringmodel.CreationDate = DateTime.UtcNow;
+        reccuringmodel.IsDeleted = false;
+        reccuringmodel.Frequency = Frequency.ToString();
+        reccuringmodel.InvoiceId = model.Id;
+        await ApiServiceInvoice.PostResource($"/api/InvoiceCost/MakeReccuring", reccuringmodel);
+        DialogService.Close(true);
+    }
+}

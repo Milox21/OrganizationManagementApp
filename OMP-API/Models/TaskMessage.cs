@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OMP_API.Models
 {
-    [Table("task_messages")]
+    [Table("TaskMessages")]
     public class TaskMessage
     {
         [Key]

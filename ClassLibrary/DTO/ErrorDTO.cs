@@ -1,17 +1,35 @@
-﻿using ClassLibrary.Models.ModelInterfaces;
+﻿using System.Text.Json.Serialization;
+using ClassLibrary.Models.ModelInterfaces;
 
 namespace ClassLibrary.DTO
 {
     public class ErrorDTO : IBaseModel
     {
+        [JsonPropertyName("id")]
         public int Id { get; set; }
-        public string Topic { get; set; } = null!;
-        public string Text { get; set; } = null!;
+
+        [JsonPropertyName("topic")]
+        public string Topic { get; set; }
+
+        [JsonPropertyName("text")]
+        public string Text { get; set; }
+
+        [JsonPropertyName("companyName")]
+        public string CompanyName { get; set; }
+
+        [JsonPropertyName("customerId")]
         public int CustomerId { get; set; }
-        public DateTime CreationDate { get; set; }
-        public DateTime? EditDate { get; set; }
-        public DateTime? DeleteDate { get; set; }
+
+        [JsonPropertyName("isDeleted")]
         public bool IsDeleted { get; set; }
-        public virtual CustomerDTO Customer { get; set; } = null!;
+
+        [JsonPropertyName("creationDate")]
+        public DateTime CreationDate { get; set; }
+
+        [JsonPropertyName("editDate")]
+        public DateTime? EditDate { get; set; }
+
+        [JsonPropertyName("deleteDate")]
+        public DateTime? DeleteDate { get; set; }
     }
 }

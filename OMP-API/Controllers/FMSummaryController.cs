@@ -19,7 +19,8 @@ namespace OMP_API.Controllers
         [HttpGet("GetAll/{customerId}/{startDate}/{endDate}")]
         public async Task<ActionResult<IEnumerable<FMSummaryDTO>>> GetAll(int customerId, DateTime startDate, DateTime endDate)
         {
-
+            var IncomeOccurance = await _context.ReccuringIncomeInvoices.Where(i => i.IsDeleted != true).ToListAsync();
+            var CostOccurance = await _context.ReccuringCostInvoices.Where(i => i.IsDeleted != true).ToListAsync();
             //Debit note
             var DebitNotes = await _context.DebitNotes
                 .Include(d => d.CurrencyNavigation)
@@ -162,32 +163,72 @@ namespace OMP_API.Controllers
                 CreationDate = i.CreationDate
             }));
 
-            CompleateSummary.AddRange(IncomeInvoices.Select(i => new FMSummaryDTO
+            CompleateSummary.AddRange(IncomeInvoices.Select(i =>
             {
-                DatabaseId = i.Id,
-                Type = "Income",
-                Title = $"{i.Name} (Income)",
-                Occurance = 1,
-                Brutto = Math.Round(i.ValueBrutto.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                Netto = Math.Round(i.ValueNetto, 2, MidpointRounding.AwayFromZero),
-                Tax = Math.Round(i.VatTaxRate.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                TaxValue = Math.Round(i.VatTaxValue.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                CurrencyId = i.CurrencyId,
-                CreationDate = i.CreationDate
+                var occurance = IncomeOccurance.FirstOrDefault(o => o.InvoiceId == i.Id);
+
+                int occuranceCount = 1; // default
+
+                if (occurance != null)
+                {
+                    DateTime effectiveStart = occurance.CreationDate > startDate ? occurance.CreationDate : startDate;
+                    DateTime effectiveEnd = (occurance.DeleteDate.HasValue && occurance.DeleteDate.Value < endDate)
+                                            ? occurance.DeleteDate.Value : endDate;
+
+                    if (effectiveEnd > effectiveStart && int.TryParse(occurance.Frequency, out int freq) && freq > 0)
+                    {
+                        int monthsDiff = ((effectiveEnd.Year - effectiveStart.Year) * 12) + effectiveEnd.Month - effectiveStart.Month;
+                        occuranceCount = (monthsDiff / freq) + 1; // +1 to count the start month
+                    }
+                }
+
+                return new FMSummaryDTO
+                {
+                    DatabaseId = i.Id,
+                    Type = "Income",
+                    Title = $"{i.Name} (Income)",
+                    Occurance = occuranceCount,
+                    Brutto = Math.Round(i.ValueBrutto.GetValueOrDefault() * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    Netto = Math.Round(i.ValueNetto * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    Tax = Math.Round(i.VatTaxRate.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
+                    TaxValue = Math.Round(i.VatTaxValue.GetValueOrDefault() * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    CurrencyId = i.CurrencyId,
+                    CreationDate = i.CreationDate
+                };
             }));
 
-            CompleateSummary.AddRange(CostInvoices.Select(i => new FMSummaryDTO
+            CompleateSummary.AddRange(CostInvoices.Select(i =>
             {
-                DatabaseId = i.Id,
-                Type = "Cost",
-                Title = $"{i.Name} (Cost)",
-                Occurance = 1,
-                Brutto = Math.Round(i.ValueBrutto.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                Netto = Math.Round(i.ValueNetto, 2, MidpointRounding.AwayFromZero),
-                Tax = Math.Round(i.VatTaxRate.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                TaxValue = Math.Round(i.VatTaxValue.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
-                CurrencyId = i.CurrencyId,
-                CreationDate = i.CreationDate
+                var occurance = CostOccurance.FirstOrDefault(o => o.InvoiceId == i.Id);
+
+                int occuranceCount = 1;
+
+                if (occurance != null)
+                {
+                    DateTime effectiveStart = occurance.CreationDate > startDate ? occurance.CreationDate : startDate;
+                    DateTime effectiveEnd = (occurance.DeleteDate.HasValue && occurance.DeleteDate.Value < endDate)
+                                            ? occurance.DeleteDate.Value : endDate;
+
+                    if (effectiveEnd > effectiveStart && int.TryParse(occurance.Frequency, out int freq) && freq > 0)
+                    {
+                        int monthsDiff = ((effectiveEnd.Year - effectiveStart.Year) * 12) + effectiveEnd.Month - effectiveStart.Month;
+                        occuranceCount = (monthsDiff / freq) + 1;
+                    }
+                }
+
+                return new FMSummaryDTO
+                {
+                    DatabaseId = i.Id,
+                    Type = "Cost",
+                    Title = $"{i.Name} (Cost)",
+                    Occurance = occuranceCount,
+                    Brutto = Math.Round(i.ValueBrutto.GetValueOrDefault() * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    Netto = Math.Round(i.ValueNetto * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    Tax = Math.Round(i.VatTaxRate.GetValueOrDefault(), 2, MidpointRounding.AwayFromZero),
+                    TaxValue = Math.Round(i.VatTaxValue.GetValueOrDefault() * occuranceCount, 2, MidpointRounding.AwayFromZero),
+                    CurrencyId = i.CurrencyId,
+                    CreationDate = i.CreationDate
+                };
             }));
 
             foreach (var p in Payrolls)

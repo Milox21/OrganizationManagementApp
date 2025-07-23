@@ -27,7 +27,7 @@
                     <RadzenPanelMenuItem Text="Model Admin Panel" Icon="home" Click="@(() => currentPage = "CustomerModuleAdmin")" />
                     <RadzenPanelMenuItem Text="Customer Admin Panel" Icon="home" Click="@(() => currentPage = "CustomerAdmin")" />
                 </RadzenPanelMenuItem>
-                <RadzenPanelMenuItem Text="Errors" Icon="dashboard" Click="@(() => currentPage = "Home")" />
+                <RadzenPanelMenuItem Text="Errors" Icon="dashboard" Click="@(() => currentPage = "Errors")" />
             </RadzenPanelMenu>
         </RadzenSidebar>
         <RadzenBody>
@@ -40,7 +40,9 @@
                     case "CustomerAdmin":
                         <OMPWebAppAdmin.Components.Pages.CustomerAdmin />
                         break;
-                    case "Weather":<OMPWebAppAdmin.Components.Pages.Weather /> break;
+                    case "Errors":
+                        <OMPWebAppAdmin.Components.Pages.ErrorList />
+                        break;
                 }
             </div>
         </RadzenBody>

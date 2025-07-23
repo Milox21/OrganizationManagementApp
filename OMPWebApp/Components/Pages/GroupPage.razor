@@ -101,7 +101,7 @@
         </RadzenColumn>
 
         <!-- Tasks -->
-        <RadzenColumn Size="3" Style="overflow-y: auto; height: 100%;">
+        <RadzenColumn Size="3">
             <RadzenRow>
                 <h4>Group Tasks</h4>
                 @if (groupAdmins?.Any(admin => admin.Id == AuthService.userDTO?.Id) == true)
@@ -110,20 +110,23 @@
                 }
             </RadzenRow>
 
-            <RadzenDataList Data="groupTasks" TItem="TaskDTO" class="tasks">
-                <Template Context="task">
-                    <div style="display: flex; flex-direction: column;">
-                        <span>
-                            @task.Title
-                            <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click="()=> SeeDetails(task)" />
-                        </span>
-                        <span style="font-size:smaller">
-                            Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Surname
-                        </span>
-                        <span style="font-size:smaller">Deadline: @task.DeadlineTime.Day / @task.DeadlineTime.Month</span>
-                    </div>
-                </Template>
-            </RadzenDataList>
+            <div style="overflow-y: auto; max-height: 80vh;">
+                @* Adjust height as needed *@
+                <RadzenDataList Data="groupTasks" TItem="TaskDTO" class="tasks">
+                    <Template Context="task">
+                        <div style="display: flex; flex-direction: column;">
+                            <span>
+                                @task.Title
+                                <RadzenButton style="float:right" Icon="report" ButtonStyle="ButtonStyle.Info" Click="()=> SeeDetails(task)" />
+                            </span>
+                            <span style="font-size:smaller">
+                                Owner: @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Name @groupMembers.FirstOrDefault(item => item.Id == task.TaskRecipient)?.Surname
+                            </span>
+                            <span style="font-size:smaller">Deadline: @task.DeadlineTime.ToString("MMM dd, yyyy")</span>
+                        </div>
+                    </Template>
+                </RadzenDataList>
+            </div>
         </RadzenColumn>
 
     </RadzenRow>
@@ -161,6 +164,7 @@
         Group = await ApiServiceGroup.GetResource($"/api/Group/{GroupId}");
         groupMembers = Group?.Users.ToList() ?? new List<UserDTO>();
         groupTasks = await ApiServiceTask.GetResources($"/api/Task/GetByGroup/{GroupId}");
+        groupTasks = groupTasks.OrderByDescending(t => t.CreationDate).ToList();
         groupAdmins = await ApiServiceUser.GetResources($"/api/GroupUser/GetAdmins/{GroupId}");
     }
 
@@ -230,7 +234,7 @@
 
     private async void SeeDetails(TaskDTO task)
     {
-        var result = await DialogService.OpenAsync<TaskDialog>("Task", new Dictionary<string, object> { { "task", task } }, new DialogOptions { Width = "700px", Height = "512px" });
+        var result = await DialogService.OpenAsync<TaskDialog>("Task", new Dictionary<string, object> { { "task", task } }, new DialogOptions { Width = "1200px", Height = "660px" });
     }
 
     private async void AddTask()

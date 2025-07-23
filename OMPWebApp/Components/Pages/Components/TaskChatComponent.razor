@@ -1,0 +1,133 @@
+﻿@using ClassLibrary.DTO
+@inject NavigationManager NavigationManager
+@inject ApiConnectionService<TaskMessageDTO> ApiService
+@inject AuthorizationService AuthService
+@using Microsoft.AspNetCore.SignalR.Client
+@using OMPWebApp.Services
+@using Radzen
+
+<style>
+    .chat-box {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.5rem;
+        background-color: #f4f4f4;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .chat-message {
+        display: flex;
+        flex-direction: column;
+        margin: 0.25rem 0;
+        max-width: 75%;
+    }
+
+        .chat-message.other {
+            align-self: flex-start;
+            text-align: justify;
+        }
+
+        .chat-message.self {
+            align-self: flex-end;
+            text-align: justify;
+        }
+
+    .message-bubble {
+        background-color: #d1e7dd;
+        padding: 0.5rem 0.75rem;
+        border-radius: 1rem;
+        display: inline-block;
+        word-break: break-word;
+        max-width: 100%;
+    }
+
+    .chat-message.self .message-bubble {
+        background-color: #bee5eb;
+    }
+
+    .message-meta {
+        font-size: 0.75rem;
+        opacity: 0.6;
+        margin-top: 2px;
+    }
+</style>
+
+<RadzenCard Style="height: 50vh;">
+    <RadzenRow Style="height: calc(100% - 3rem); overflow: hidden;">
+        <RadzenColumn Size="12" Style="display: flex; flex-direction: column; height: 100%;">
+            <!-- Chat Messages -->
+            <div class="chat-box" @ref="chatContainer">
+                @foreach (var msg in messages)
+                {
+                    var isUser = msg.UserSenderId == AuthService.userDTO?.Id;
+                    <div class="chat-message @(isUser ? "self" : "other")">
+                        <div>
+                            <div class="message-bubble">@msg.Text</div>
+                            <div class="message-meta">@msg.Username</div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Input -->
+            <div style="display: flex; margin-top: auto; gap: 0.5rem; align-items: center;">
+                <RadzenTextBox @bind-Value="newMessage" Placeholder="Type a message..." Style="flex: 1;" />
+                <RadzenButton Text="Send" Click="SendMessageAsync" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    [Parameter] public int TaskId { get; set; }
+    private List<TaskMessageDTO> messages = new();
+    private string newMessage = "";
+    private HubConnection? hubConnection;
+    private ElementReference chatContainer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadMessages();
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl($"https://localhost:7070/taskchathub?taskId={TaskId}")
+            .WithAutomaticReconnect()
+            .Build();
+
+        hubConnection.On<TaskMessageDTO>("ReceiveMessage", message =>
+        {
+            messages.Add(message);
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private async Task LoadMessages()
+    {
+        messages = await ApiService.GetResources($"/api/TaskMessage/ByTask/{TaskId}");
+    }
+
+    private async Task SendMessageAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(newMessage))
+        {
+            var message = new TaskMessageDTO
+                {
+                    TaskId = TaskId,
+                    Text = newMessage,
+                    UserSenderId = AuthService.userDTO!.Id,
+                    Username = AuthService.userDTO.Name + " " + AuthService.userDTO.Surname,
+                    CreationDate = DateTime.UtcNow
+                };
+
+            await ApiService.PostResource("/api/TaskMessage", message);
+            await hubConnection.SendAsync("SendMessageToTask", TaskId, message);
+
+            newMessage = "";
+        }
+    }
+}

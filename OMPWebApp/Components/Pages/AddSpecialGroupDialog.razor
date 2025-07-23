@@ -9,10 +9,10 @@
 <RadzenTemplateForm TItem="SpecialGroupDTO" Data="@group" Submit="@SaveItem" Style="padding: 20px;">
 
     <RadzenFieldset Legend="Group Details">
-        <RadzenLabel Text="Title" />
+        <RadzenLabel Text="Group name" />
         <RadzenTextBox @bind-Value="group.Title" Placeholder="Enter group name" Style="width: 100%;" />
 
-        <RadzenLabel Text="Address" Style="margin-top: 10px;" />
+        <RadzenLabel Text="Description" Style="margin-top: 10px;" />
         <RadzenTextBox @bind-Value="group.Description" Placeholder="Enter description" Style="width: 100%;" />
     </RadzenFieldset>
 
